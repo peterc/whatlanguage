@@ -45,10 +45,6 @@ Text language detection. Quick, fast, memory efficient, and all in pure Ruby. Us
 
 * None, minor libraries (BloominSimple and BitField) included with this release.
 
-== INSTALL:
-
-* sudo gem install whatlanguage
-
 == LICENSE:
 
 (The MIT License)
