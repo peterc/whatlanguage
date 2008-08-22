@@ -1,6 +1,6 @@
 Gem::Specification.new do |s|
   s.name     = "whatlanguage"
-  s.version  = "1.0.0"
+  s.version  = "1.0.1"
   s.date     = "2008-08-22"
   s.summary  = "Natural language detection for text samples"
   s.email    = "whatlanguage@peterc.org"
