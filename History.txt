@@ -1,0 +1,4 @@
+== 1.0.0 / 2007-07-02
+
+* First version with pre-built English, French, and Spanish filters
+
