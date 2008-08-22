@@ -7,9 +7,10 @@ whatlanguage
   
 Text language detection. Quick, fast, memory efficient, and all in pure Ruby. Uses Bloom filters for aforementioned speed and memory benefits.
 
+Works with Dutch, English, Farsi, French, German, Pinyin, Portuguese, Russian and Spanish out of the box.
+
 == FEATURES/PROBLEMS:
   
-* Only does French, English and Spanish out of the box. Very easy to train new languages though.
 * It can be made far more efficient at the comparison stage, but all in good time..! It still beats literal dictionary approaches.
 * No filter selection yet, you get 'em all loaded.
 * Tests are reasonably light.
@@ -44,6 +45,16 @@ Text language detection. Quick, fast, memory efficient, and all in pure Ruby. Us
 == REQUIREMENTS:
 
 * None, minor libraries (BloominSimple and BitField) included with this release.
+
+== INSTALLATION:
+
+  gem sources -a http://gems.github.com
+  sudo gem install peterc-whatlanguage
+
+  To test, go into irb, then:
+
+  require 'whatlanguage'
+  "Je suis un homme".language
 
 == LICENSE:
 
