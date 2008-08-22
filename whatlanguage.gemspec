@@ -13,7 +13,6 @@ Gem::Specification.new do |s|
 "build_lang_from_wordlists.rb",
 "example.rb",
 "History.txt",
-"lang",
 "lang/dutch.lang",
 "lang/english.lang",
 "lang/farsi.lang",
@@ -23,7 +22,6 @@ Gem::Specification.new do |s|
 "lang/portuguese.lang",
 "lang/russian.lang",
 "lang/spanish.lang",
-"lib",
 "lib/bitfield.rb",
 "lib/bloominsimple.rb",
 "lib/whatlanguage.rb",
@@ -31,19 +29,8 @@ Gem::Specification.new do |s|
 "Rakefile",
 "README",
 "README.txt",
-"test",
 "test/test_whatlanguage.rb",
-"whatlanguage.gemspec",
-"wordlists",
-"wordlists/dutch",
-"wordlists/english",
-"wordlists/farsi",
-"wordlists/french",
-"wordlists/german",
-"wordlists/pinyin",
-"wordlists/portuguese",
-"wordlists/russian",
-"wordlists/spanish"]
+"whatlanguage.gemspec"]
 
   s.rdoc_options = ["--main", "README.txt"]
   s.extra_rdoc_files = ["History.txt", "Manifest.txt", "README.txt"]
