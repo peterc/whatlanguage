@@ -18,6 +18,10 @@ class TestWhatLanguage < Test::Unit::TestCase
   def test_spanish
     assert_equal :spanish, @wl.language("La palabra mezquita se usa en español para referirse a todo tipo de edificios dedicados.")
   end
+
+  def test_swedish
+    assert_equal :swedish, @wl.language("Den spanska räven rev en annan räv alldeles lagom.")
+  end
   
   def test_nothing
     assert_nil @wl.language("")
