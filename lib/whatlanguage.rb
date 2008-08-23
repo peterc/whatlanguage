@@ -2,7 +2,7 @@ require File.join(File.dirname(__FILE__), 'bloominsimple')
 require 'digest/sha1'
 
 class WhatLanguage
-  VERSION = '1.0.0'
+  VERSION = '1.0.2'
   
   HASHER = lambda { |item| Digest::SHA1.digest(item.downcase.strip).unpack("VV") }
   
@@ -10,7 +10,7 @@ class WhatLanguage
   
   @@data = {}
   
-  def initialize(options)
+  def initialize(options = {})
     languages_folder = File.join(File.dirname(__FILE__), "..", "lang")
     Dir.entries(languages_folder).grep(/\.lang/).each do |lang|
       @@data[lang[/\w+/].to_sym] ||= BloominSimple.from_dump(File.read(File.join(languages_folder, lang)), &HASHER)
