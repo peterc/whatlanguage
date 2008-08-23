@@ -7,7 +7,7 @@ whatlanguage
   
 Text language detection. Quick, fast, memory efficient, and all in pure Ruby. Uses Bloom filters for aforementioned speed and memory benefits.
 
-Works with Dutch, English, Farsi, French, German, Pinyin, Portuguese, Russian and Spanish out of the box.
+Works with Dutch, English, Farsi, French, German, Swedish, Portuguese, Russian and Spanish out of the box.
 
 == FEATURES/PROBLEMS:
   

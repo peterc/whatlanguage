@@ -1,7 +1,7 @@
 Gem::Specification.new do |s|
   s.name     = "whatlanguage"
-  s.version  = "1.0.1"
-  s.date     = "2008-08-22"
+  s.version  = "1.0.2"
+  s.date     = "2008-08-23"
   s.summary  = "Natural language detection for text samples"
   s.email    = "whatlanguage@peterc.org"
   s.homepage = "http://github.com/peterc/whatlanguage"
@@ -22,6 +22,7 @@ Gem::Specification.new do |s|
 "lang/portuguese.lang",
 "lang/russian.lang",
 "lang/spanish.lang",
+"lang/swedish.lang",
 "lib/bitfield.rb",
 "lib/bloominsimple.rb",
 "lib/whatlanguage.rb",
