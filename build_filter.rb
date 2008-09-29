@@ -6,4 +6,4 @@
 
 require 'lib/whatlanguage'
 filter = WhatLanguage.filter_from_dictionary(ARGV[0])
-File.open(ARGV[1], 'w') { |f| f.write filter.dump }
+File.open(ARGV[1], 'wb') { |f| f.write filter.dump }
