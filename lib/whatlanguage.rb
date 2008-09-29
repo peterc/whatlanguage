@@ -2,7 +2,7 @@ require File.join(File.dirname(__FILE__), 'bloominsimple')
 require 'digest/sha1'
 
 class WhatLanguage
-  VERSION = '1.0.2'
+  VERSION = '1.0.3'
   
   HASHER = lambda { |item| Digest::SHA1.digest(item.downcase.strip).unpack("VV") }
   
