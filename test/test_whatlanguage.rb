@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 require "test/unit"
 
 require File.join(File.dirname(__FILE__), "..", "lib", "whatlanguage")
@@ -21,6 +22,10 @@ class TestWhatLanguage < Test::Unit::TestCase
 
   def test_swedish
     assert_equal :swedish, @wl.language("Den spanska räven rev en annan räv alldeles lagom.")
+  end
+
+  def test_russian
+    assert_equal :russian, @wl.language("Все новости в хронологическом порядке")
   end
   
   def test_nothing
