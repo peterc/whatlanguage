@@ -11,7 +11,11 @@ class TestWhatLanguage < Test::Unit::TestCase
   def test_string_method
     assert_equal :english, "This is a test".language
   end
-  
+
+  def test_dutch
+    assert_equal :dutch, @wl.language("Als hadden geweest is, is hebben te laat.")
+  end
+
   def test_french
     assert_equal :french, @wl.language("Bonjour, je m'appelle Sandrine. Voila ma chatte.")
   end
