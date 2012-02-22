@@ -43,4 +43,9 @@ class TestWhatLanguage < Test::Unit::TestCase
   def test_processor
     assert_kind_of Hash, @wl.process_text("this is a test")
   end
+
+  def test_italian
+    assert_equal :italian, @wl.language("Roma, capitale dell'impero romano, è stata per secoli il centro politico e culturale della civiltà occidentale.")
+  end
+
 end
