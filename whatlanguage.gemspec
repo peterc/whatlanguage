@@ -18,6 +18,7 @@ Gem::Specification.new do |s|
 "lang/farsi.lang",
 "lang/french.lang",
 "lang/german.lang",
+"lang/italian.lang",
 "lang/pinyin.lang",
 "lang/portuguese.lang",
 "lang/russian.lang",
