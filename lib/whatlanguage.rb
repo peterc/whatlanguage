@@ -19,15 +19,13 @@ class WhatLanguage
   end
 
   def process_text(text)
-    results = Hash.new(0)
-    text.split(/[\,\.\?\!\:\; ]/).reject(&:empty?).map do |word| 
+    text.split(/[\,\.\?\!\:\; ]/).reject(&:empty?).map do |word|
       Unicode::downcase word
-    end.uniq.each do |word|
+    end.uniq.each_with_object(Hash.new(0)) do |word, results|
       @@data.keys.each do |lang|
-        results[lang] += 1 if @@data[lang].includes?(word)
+        results[lang] += 1 if @@data[lang].includes? word
       end
     end
-    results
   end
 
   def language(text)
