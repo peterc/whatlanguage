@@ -1,5 +1,6 @@
 require File.join(File.dirname(__FILE__), 'bloominsimple')
 require 'digest/sha1'
+require 'unicode'
 
 class WhatLanguage
   VERSION = '1.0.3'
@@ -19,13 +20,12 @@ class WhatLanguage
 
   def process_text(text)
     results = Hash.new(0)
-
-    text.split(/[\,\.\?\!\:\; ]/).reject(&:empty?).map(&:downcase).uniq.each do |word|
-
+    text.split(/[\,\.\?\!\:\; ]/).reject(&:empty?).map do |word| 
+      Unicode::downcase word
+    end.uniq.each do |word|
       @@data.keys.each do |lang|
         results[lang] += 1 if @@data[lang].includes?(word)
       end
-
     end
     results
   end
