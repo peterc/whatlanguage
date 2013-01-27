@@ -32,6 +32,10 @@ class TestWhatLanguage < Test::Unit::TestCase
     assert_equal :russian, @wl.language("Все новости в хронологическом порядке")
   end
   
+  def test_bulgarian
+    assert_equal :bulgarian, @wl.language("Ако поискаш спри и погледни назад, аз съм твоя сянка, твоя грях, ако поискаш спри и остани да погледна в теб.")
+  end
+  
   def test_nothing
     assert_nil @wl.language("")
   end
