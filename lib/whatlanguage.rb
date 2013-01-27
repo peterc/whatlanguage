@@ -16,31 +16,20 @@ class WhatLanguage
       @@data[lang[/\w+/].to_sym] ||= BloominSimple.from_dump(File.new(File.join(languages_folder, lang), 'rb').read, &HASHER)
     end
   end
-  
-  # Very inefficient method for now.. but still beats the non-Bloom alternatives.
-  # Change to better bit comparison technique later..
+
   def process_text(text)
     results = Hash.new(0)
-    it = 0
-    text.split.collect {|a| a.downcase }.each do |word|
-      it += 1
+
+    text.split(/[\,\.\?\!\:\; ]/).reject(&:empty?).map(&:downcase).uniq.each do |word|
+
       @@data.keys.each do |lang|
         results[lang] += 1 if @@data[lang].includes?(word)
       end
-      
-      # Every now and then check to see if we have a really convincing result.. if so, exit early.
-      if it % 4 == 0 && results.size > 1
-        top_results = results.sort_by{|a,b| b}.reverse[0..1]
-        
-        # Next line may need some tweaking one day..
-        break if top_results[0][1] > 4 && ((top_results[0][1] > top_results[1][1] * 2) || (top_results[0][1] - top_results[1][1] > 25))
-      end
-      
-      #break if it > 100
+
     end
     results
   end
-  
+
   def language(text)
     process_text(text).max { |a,b| a[1] <=> b[1] }.first rescue nil
   end
