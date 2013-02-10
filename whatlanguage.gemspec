@@ -24,6 +24,7 @@ Gem::Specification.new do |s|
 "lang/russian.lang",
 "lang/spanish.lang",
 "lang/swedish.lang",
+"lang/bulgarian.lang",
 "lib/bitfield.rb",
 "lib/bloominsimple.rb",
 "lib/whatlanguage.rb",
