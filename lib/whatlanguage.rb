@@ -4,13 +4,13 @@ require 'unicode'
 
 class WhatLanguage
   VERSION = '1.0.3'
-  
+
   HASHER = lambda { |item| Digest::SHA1.digest(item.downcase.strip).unpack("VV") }
-  
+
   BITFIELD_WIDTH = 2_000_000
-  
+
   @@data = {}
-  
+
   def initialize(options = {})
     languages_folder = File.join(File.dirname(__FILE__), "..", "lang")
     Dir.entries(languages_folder).grep(/\.lang/).each do |lang|
@@ -19,7 +19,7 @@ class WhatLanguage
   end
 
   def process_text(text)
-    text.split(/[\,\.\?\!\:\; ]/).reject(&:empty?).map do |word|
+    text.split(/[^\p{Word}]+/u).map do |word|
       Unicode::downcase word
     end.uniq.each_with_object(Hash.new(0)) do |word, results|
       @@data.keys.each do |lang|
@@ -31,7 +31,7 @@ class WhatLanguage
   def language(text)
     process_text(text).max { |a,b| a[1] <=> b[1] }.first rescue nil
   end
-  
+
   def self.filter_from_dictionary(filename)
     bf = BloominSimple.new(BITFIELD_WIDTH, &HASHER)
     File.open(filename).each { |word| bf.add(word) }
