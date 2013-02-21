@@ -29,7 +29,11 @@ class WhatLanguage
   end
 
   def language(text)
-    process_text(text).max { |a,b| a[1] <=> b[1] }.first rescue nil
+    process_text(text).max { |a, b| a[1] <=> b[1] }.first rescue nil
+  end
+
+  def languages(text)
+    process_text(text).sort_by { |a| a[1] }.map { |a| a[0] } rescue nil
   end
 
   def self.filter_from_dictionary(filename)
@@ -42,5 +46,9 @@ end
 class String
   def language
     WhatLanguage.new(:all).language(self)
+  end
+
+  def languages
+    WhatLanguage.new(:all).languages(self)
   end
 end
