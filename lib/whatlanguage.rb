@@ -1,9 +1,8 @@
-require File.join(File.dirname(__FILE__), 'bloominsimple')
+require 'whatlanguage/bloominsimple'
+require 'whatlanguage/bitfield'
 require 'digest/sha1'
 
-class WhatLanguage
-  VERSION = '1.0.3'
-  
+class WhatLanguage  
   HASHER = lambda { |item| Digest::SHA1.digest(item.downcase.strip).unpack("VV") }
   
   BITFIELD_WIDTH = 2_000_000

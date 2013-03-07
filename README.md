@@ -1,23 +1,21 @@
-whatlanguage
-    by Peter Cooper
-    http://www.petercooper.co.uk/
-    http://www.rubyinside.com/
+# whatlanguage
 
-== DESCRIPTION:
-  
+by Peter Cooper
+
 Text language detection. Quick, fast, memory efficient, and all in pure Ruby. Uses Bloom filters for aforementioned speed and memory benefits.
 
-Works with Dutch, English, Farsi, French, German, Swedish, Portuguese, Russian and Spanish out of the box.
+Works with Dutch, English, Farsi, French, German, Italian, Pinyin, Swedish, Portuguese, Russian and Spanish out of the box.
 
-== FEATURES/PROBLEMS:
+## Important note
   
-* It can be made far more efficient at the comparison stage, but all in good time..! It still beats literal dictionary approaches.
-* No filter selection yet, you get 'em all loaded.
-* Tests are reasonably light.
+This library was first built in 2007 and has received a few minor updates over the years. There are now more efficient and effective algorithms for doing language detection which I am investigating for a WhatLanguage 2.0.
 
-== SYNOPSIS:
+This library has been updated to be distributed and to work on modern Ruby implementations but other than that, has had no improvements.
 
-  Full Example
+## Synopsis
+
+Full Example
+
     require 'whatlanguage'
     
     texts = []
@@ -30,37 +28,40 @@ Works with Dutch, English, Farsi, French, German, Swedish, Portuguese, Russian a
     
     texts.each { |text| puts "#{text[0..18]}... is in #{text.language.to_s.capitalize}" }
 
-  Initialize WhatLanguage with all filters
+Initialize WhatLanguage with all filters
+
     wl = WhatLanguage.new(:all)
 
-  Return language with best score
+Return language with best score
+
     wl.language(text)
 
-  Return hash with scores for all relevant languages
+Return hash with scores for all relevant languages
+
     wl.process_text(text)
 
-  Convenience method on String
+Convenience method on String
+
     "This is a test".language   # => "English"
 
-== REQUIREMENTS:
+## Requirements
 
-* None, minor libraries (BloominSimple and BitField) included with this release.
+None, minor libraries (BloominSimple and BitField) included with this release.
 
-== INSTALLATION:
+## Installation
 
-  gem sources -a http://gems.github.com
-  sudo gem install peterc-whatlanguage
+    gem install whatlanguage
 
-  To test, go into irb, then:
+To test, go into irb, then:
 
-  require 'whatlanguage'
-  "Je suis un homme".language
+    require 'whatlanguage'
+    "Je suis un homme".language
 
-== LICENSE:
+## License
 
-(The MIT License)
+MIT License
 
-Copyright (c) 2007-2008 Peter Cooper
+Copyright (c) 2007-2013 Peter Cooper
 
 Permission is hereby granted, free of charge, to any person obtaining
 a copy of this software and associated documentation files (the

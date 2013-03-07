@@ -36,7 +36,7 @@
 #                 #  =>    nooooooo: false
 #                 #  => newyorkcity: false
 
-require File.join(File.dirname(__FILE__), 'bitfield')
+require 'whatlanguage/bitfield'
 
 class BloominSimple
   attr_accessor :bitfield, :hasher

@@ -1,7 +1,7 @@
-# -*- coding: utf-8 -*-
+# encoding: utf-8
 require "test/unit"
 
-require File.join(File.dirname(__FILE__), "..", "lib", "whatlanguage")
+require 'whatlanguage'
 
 class TestWhatLanguage < Test::Unit::TestCase
   def setup
