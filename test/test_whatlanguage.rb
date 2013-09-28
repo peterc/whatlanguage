@@ -54,4 +54,14 @@ class TestWhatLanguage < Test::Unit::TestCase
     assert_equal :german, selective_wl.language("der die das")
   end
 
+  def test_language_selection_empty
+    selective_wl = WhatLanguage.new()
+    assert_nil selective_wl.language("This is a test")
+  end
+
+  def test_language_selection_mixed
+    selective_wl = WhatLanguage.new(:german, :all, :english)
+    assert_equal :russian, selective_wl.language("Все новости в хронологическом порядке")
+  end
+
 end
