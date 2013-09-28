@@ -4,7 +4,7 @@ by Peter Cooper
 
 Text language detection. Quick, fast, memory efficient, and all in pure Ruby. Uses Bloom filters for aforementioned speed and memory benefits.
 
-Works with Dutch, English, Farsi, French, German, Italian, Pinyin, Swedish, Portuguese, Russian and Spanish out of the box.
+Works with Dutch, English, Farsi, French, German, Italian, Pinyin, Swedish, Portuguese, Russian, Arabic, Finnish, Greek, Hebrew, Hungarian, Korean, Norwegian, Polish and Spanish out of the box.
 
 ## Important note
   
@@ -25,7 +25,15 @@ Full Example
     texts << %q{Returns the object in enum with the maximum value.}
     texts << %q{Propose des données au sujet de la langue espagnole.}
     texts << %q{La palabra "mezquita" se usa en español para referirse a todo tipo de edificios dedicados.}
-    
+    texts << %q{اللغة التي هي هذه؟}
+    texts << %q{Mitä kieltä tämä on?}
+    texts << %q{Ποια γλώσσα είναι αυτή;}
+    texts << %q{באיזו שפה זה?}
+    texts << %q{Milyen nyelv ez?}
+    texts << %q{이 어떤 언어인가?}
+    texts << %q{Hvilket språk er dette?}
+    texts << %q{W jakim języku to jest?}
+
     texts.each { |text| puts "#{text[0..18]}... is in #{text.language.to_s.capitalize}" }
 
 Initialize WhatLanguage with all filters
