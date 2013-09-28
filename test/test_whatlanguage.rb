@@ -48,4 +48,10 @@ class TestWhatLanguage < Test::Unit::TestCase
     assert_equal :italian, @wl.language("Roma, capitale dell'impero romano, è stata per secoli il centro politico e culturale della civiltà occidentale.")
   end
 
+  def test_language_selection
+    assert_equal :russian, @wl.language("der die das")
+    selective_wl = WhatLanguage.new(:german, :english)
+    assert_equal :german, selective_wl.language("der die das")
+  end
+
 end
