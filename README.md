@@ -44,6 +44,10 @@ Convenience method on String
 
     "This is a test".language   # => "English"
 
+Initialize WhatLanguage with certain languages
+
+    wl = WhatLanguage.new(:english, :german, :french)
+
 ## Requirements
 
 None, minor libraries (BloominSimple and BitField) included with this release.
