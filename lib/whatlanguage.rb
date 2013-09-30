@@ -10,7 +10,7 @@ class WhatLanguage
   @@data = {}
   
   def initialize(*selection)
-    @selection = selection
+    @selection = (selection.empty?) ? [:all] : selection
     languages_folder = File.join(File.dirname(__FILE__), "..", "lang")
     Dir.entries(languages_folder).grep(/\.lang/).each do |lang|
       @@data[lang[/\w+/].to_sym] ||= BloominSimple.from_dump(File.new(File.join(languages_folder, lang), 'rb').read, &HASHER)
