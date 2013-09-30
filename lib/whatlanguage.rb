@@ -9,7 +9,8 @@ class WhatLanguage
   
   @@data = {}
   
-  def initialize(options = {})
+  def initialize(*selection)
+    @selection = (selection.empty?) ? [:all] : selection
     languages_folder = File.join(File.dirname(__FILE__), "..", "lang")
     Dir.entries(languages_folder).grep(/\.lang/).each do |lang|
       @@data[lang[/\w+/].to_sym] ||= BloominSimple.from_dump(File.new(File.join(languages_folder, lang), 'rb').read, &HASHER)
@@ -23,7 +24,14 @@ class WhatLanguage
     it = 0
     text.split.collect {|a| a.downcase }.each do |word|
       it += 1
-      @@data.keys.each do |lang|
+
+      if @selection.include?(:all)
+        languages = @@data.keys
+      else
+        languages = @@data.keys & @selection  # intersection
+      end
+
+      languages.each do |lang|
         results[lang] += 1 if @@data[lang].includes?(word)
       end
       
