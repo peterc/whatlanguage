@@ -22,7 +22,7 @@ class WhatLanguage
   def process_text(text)
     results = Hash.new(0)
     it = 0
-    text.split.collect {|a| a.downcase }.each do |word|
+    text.downcase.split.each do |word|
       it += 1
 
       if @selection.include?(:all)
@@ -37,7 +37,7 @@ class WhatLanguage
       
       # Every now and then check to see if we have a really convincing result.. if so, exit early.
       if it % 4 == 0 && results.size > 1
-        top_results = results.sort_by{|a,b| b}.reverse[0..1]
+        top_results = results.sort_by{|a,b| -b}[0..1]
         
         # Next line may need some tweaking one day..
         break if top_results[0][1] > 4 && ((top_results[0][1] > top_results[1][1] * 2) || (top_results[0][1] - top_results[1][1] > 25))
