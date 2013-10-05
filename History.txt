@@ -1,3 +1,9 @@
+== 1.0.5 / 2013-10-05
+
+* Many more languages supported
+
+== 1.0.4 / 2013-03-07
+
 == 1.0.1 / 2008-08-22
 
 * Public release

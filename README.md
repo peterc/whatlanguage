@@ -69,6 +69,10 @@ To test, go into irb, then:
     require 'whatlanguage'
     "Je suis un homme".language
 
+## Credits
+
+Contributions from Konrad Reiche and Salimane Adjao Moustapha appreciated.
+
 ## License
 
 MIT License
