@@ -79,6 +79,10 @@ class TestWhatLanguage < Test::Unit::TestCase
   def test_swedish
     assert_equal :swedish, @wl.language("Vilket språk är detta?")
   end
+
+  def test_danish
+    assert_equal :danish, @wl.language("Dansk er et nord-germansk sprog af den østnordiske (kontinentale) gruppe, der tales af ca. seks millioner mennesker.")
+  end
   
   def test_nothing
     assert_nil @wl.language("")
