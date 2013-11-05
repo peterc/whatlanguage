@@ -16,6 +16,17 @@ class WhatLanguage
       @@data[lang[/\w+/].to_sym] ||= BloominSimple.from_dump(File.new(File.join(languages_folder, lang), 'rb').read, &HASHER)
     end
   end
+
+  def languages
+    @languages ||=
+      begin
+        if @selection.include?(:all)
+          languages = @@data.keys
+        else
+          languages = @@data.keys & @selection  # intersection
+        end
+      end
+  end
   
   # Very inefficient method for now.. but still beats the non-Bloom alternatives.
   # Change to better bit comparison technique later..
@@ -29,16 +40,10 @@ class WhatLanguage
     text.downcase.split.each do |word|
       it += 1
 
-      if @selection.include?(:all)
-        languages = @@data.keys
-      else
-        languages = @@data.keys & @selection  # intersection
-      end
-
       languages.each do |lang|
         results[lang] += 1 if @@data[lang].includes?(word)
       end
-      
+
       # Every now and then check to see if we have a really convincing result.. if so, exit early.
       if options[:exit_early] && it % 4 == 0 && results.size > 1
         top_results = results.sort_by{|a,b| -b}[0..1]
