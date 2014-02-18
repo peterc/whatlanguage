@@ -16,45 +16,57 @@ This library has been updated to be distributed and to work on modern Ruby imple
 
 Full Example
 
-    require 'whatlanguage'
-    
-    texts = []
-    texts << %q{Deux autres personnes ont été arrêtées durant la nuit}
-    texts << %q{The links between the attempted car bombings in Glasgow and London are becoming clearer}
-    texts << %q{En estado de máxima alertaen su nivel de crítico}
-    texts << %q{Returns the object in enum with the maximum value.}
-    texts << %q{Propose des données au sujet de la langue espagnole.}
-    texts << %q{La palabra "mezquita" se usa en español para referirse a todo tipo de edificios dedicados.}
-    texts << %q{اللغة التي هي هذه؟}
-    texts << %q{Mitä kieltä tämä on?}
-    texts << %q{Ποια γλώσσα είναι αυτή;}
-    texts << %q{באיזו שפה זה?}
-    texts << %q{Milyen nyelv ez?}
-    texts << %q{이 어떤 언어인가?}
-    texts << %q{Hvilket språk er dette?}
-    texts << %q{W jakim języku to jest?}
+```ruby
+require 'whatlanguage'
 
-    texts.each { |text| puts "#{text[0..18]}... is in #{text.language.to_s.capitalize}" }
+texts = []
+texts << %q{Deux autres personnes ont été arrêtées durant la nuit}
+texts << %q{The links between the attempted car bombings in Glasgow and London are becoming clearer}
+texts << %q{En estado de máxima alertaen su nivel de crítico}
+texts << %q{Returns the object in enum with the maximum value.}
+texts << %q{Propose des données au sujet de la langue espagnole.}
+texts << %q{La palabra "mezquita" se usa en español para referirse a todo tipo de edificios dedicados.}
+texts << %q{اللغة التي هي هذه؟}
+texts << %q{Mitä kieltä tämä on?}
+texts << %q{Ποια γλώσσα είναι αυτή;}
+texts << %q{באיזו שפה זה?}
+texts << %q{Milyen nyelv ez?}
+texts << %q{이 어떤 언어인가?}
+texts << %q{Hvilket språk er dette?}
+texts << %q{W jakim języku to jest?}
+
+texts.each { |text| puts "#{text[0..18]}... is in #{text.language.to_s.capitalize}" }
+```
 
 Initialize WhatLanguage with all filters
 
-    wl = WhatLanguage.new(:all)
+```ruby
+wl = WhatLanguage.new(:all)
+```
 
 Return language with best score
 
-    wl.language(text)
+```ruby
+wl.language(text)
+```
 
 Return hash with scores for all relevant languages
 
-    wl.process_text(text)
+```ruby
+wl.process_text(text)
+```
 
 Convenience method on String
 
-    "This is a test".language   # => "English"
+```ruby
+"This is a test".language   # => "English"
+```
 
 Initialize WhatLanguage with certain languages
 
-    wl = WhatLanguage.new(:english, :german, :french)
+```ruby
+wl = WhatLanguage.new(:english, :german, :french)
+```
 
 ## Requirements
 
@@ -66,8 +78,10 @@ None, minor libraries (BloominSimple and BitField) included with this release.
 
 To test, go into irb, then:
 
-    require 'whatlanguage'
-    "Je suis un homme".language
+```ruby
+require 'whatlanguage'
+"Je suis un homme".language
+```
 
 ## Credits
 
