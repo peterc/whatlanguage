@@ -59,7 +59,7 @@ wl.process_text(text)
 Convenience method on String
 
 ```ruby
-"This is a test".language   # => "English"
+"This is a test".language   # => :english
 ```
 
 Initialize WhatLanguage with certain languages
