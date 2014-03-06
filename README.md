@@ -7,7 +7,7 @@ Text language detection. Quick, fast, memory efficient, and all in pure Ruby. Us
 Works with Dutch, English, Farsi, French, German, Italian, Pinyin, Swedish, Portuguese, Russian, Arabic, Finnish, Greek, Hebrew, Hungarian, Korean, Norwegian, Polish and Spanish out of the box.
 
 ## Important note
-  
+
 This library was first built in 2007 and has received a few minor updates over the years. There are now more efficient and effective algorithms for doing language detection which I am investigating for a WhatLanguage 2.0.
 
 This library has been updated to be distributed and to work on modern Ruby implementations but other than that, has had no improvements.
@@ -59,7 +59,7 @@ wl.process_text(text)
 Convenience method on String
 
 ```ruby
-"This is a test".language   # => "English"
+"This is a test".language   # => :english
 ```
 
 Initialize WhatLanguage with certain languages
