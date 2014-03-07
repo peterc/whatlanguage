@@ -33,7 +33,7 @@ class WhatLanguage
   def process_text(text)
     results = Hash.new(0)
     it = 0
-    text.downcase.split.each do |word|
+    to_lowercase(text).split.each do |word|
       it += 1
 
       languages.each do |lang|
@@ -61,6 +61,12 @@ class WhatLanguage
     bf = BloominSimple.new(BITFIELD_WIDTH, &HASHER)
     File.open(filename).each { |word| bf.add(word) }
     bf
+  end
+
+  if !defined? UnicodeUtils
+    define_method(:to_lowercase) { |str| str.downcase }
+  else
+    define_method(:to_lowercase) { |str| UnicodeUtils.casefold(str) }
   end
 end
 
