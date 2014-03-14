@@ -1,6 +1,12 @@
 # encoding: utf-8
 require "test/unit"
 
+# not a dependency
+begin
+  require 'unicode_utils'
+rescue LoadError
+end
+
 require 'whatlanguage'
 
 class TestWhatLanguage < Test::Unit::TestCase
@@ -113,5 +119,10 @@ class TestWhatLanguage < Test::Unit::TestCase
   def test_language_selection_mixed
     selective_wl = WhatLanguage.new(:german, :all, :english)
     assert_equal :russian, selective_wl.language("Все новости в хронологическом порядке")
+  end
+
+  def test_casing_conversion
+    skip unless defined? UnicodeUtils
+    assert_equal "âncora cor âmbar".language, "ÂNCORA COR ÂMBAR".language
   end
 end
