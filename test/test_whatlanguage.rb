@@ -13,9 +13,13 @@ class TestWhatLanguage < Test::Unit::TestCase
   def setup
     @wl = WhatLanguage.new(:all)
   end
-  
+
   def test_string_method
     assert_equal :english, "This is a test".language
+  end
+
+  def test_string_iso_method
+    assert_equal :en, "this is a test".language_iso
   end
 
   def test_arabic
@@ -35,9 +39,9 @@ class TestWhatLanguage < Test::Unit::TestCase
   end
 
   def test_french
-    assert_equal :french, @wl.language("Bonjour, je m'appelle Sandrine. Voila ma chatte.")
+    assert_equal :french, @wl.language("Bonjour, je m'appelle Sandrine. Voila mon chat.")
   end
-  
+
   def test_german
     assert_equal :german, @wl.language("Welche Sprache ist das?")
   end
@@ -89,15 +93,15 @@ class TestWhatLanguage < Test::Unit::TestCase
   def test_danish
     assert_equal :danish, @wl.language("Dansk er et nord-germansk sprog af den østnordiske (kontinentale) gruppe, der tales af ca. seks millioner mennesker.")
   end
-  
+
   def test_nothing
     assert_nil @wl.language("")
   end
-  
+
   def test_something
     assert_not_nil @wl.language("test")
   end
-  
+
   def test_processor
     assert_kind_of Hash, @wl.process_text("this is a test")
   end
