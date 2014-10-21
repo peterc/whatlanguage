@@ -2,13 +2,37 @@ require 'whatlanguage/bloominsimple'
 require 'whatlanguage/bitfield'
 require 'digest/sha1'
 
-class WhatLanguage  
+class WhatLanguage
   HASHER = lambda { |item| Digest::SHA1.digest(item.downcase.strip).unpack("VV") }
-  
+
   BITFIELD_WIDTH = 2_000_000
-  
+
+  ISO_CODES = {
+    nil => nil,
+    :arabic => :ar,
+    :danish => :da,
+    :dutch  => :nl,
+    :english => :en,
+    :farsi => :fa,
+    :finnish => :fi,
+    :french => :fr,
+    :german => :de,
+    :greek => :el,
+    :hebrew => :he,
+    :hungarian => :hu,
+    :italian => :it,
+    :korean => :ko,
+    :norwegian => :no,
+    :pinyin => :zh,
+    :polish => :pl,
+    :portuguese => :pt,
+    :russian => :ru,
+    :spanish => :es,
+    :swedish => :sv
+  }
+
   @@data = {}
-  
+
   def initialize(*selection)
     @selection = (selection.empty?) ? [:all] : selection
     languages_folder = File.join(File.dirname(__FILE__), "..", "lang")
@@ -27,7 +51,7 @@ class WhatLanguage
         end
       end
   end
-  
+
   # Very inefficient method for now.. but still beats the non-Bloom alternatives.
   # Change to better bit comparison technique later..
   def process_text(text)
@@ -43,20 +67,24 @@ class WhatLanguage
       # Every now and then check to see if we have a really convincing result.. if so, exit early.
       if it % 4 == 0 && results.size > 1
         top_results = results.sort_by{|a,b| -b}[0..1]
-        
+
         # Next line may need some tweaking one day..
         break if top_results[0][1] > 4 && ((top_results[0][1] > top_results[1][1] * 2) || (top_results[0][1] - top_results[1][1] > 25))
       end
-      
+
       #break if it > 100
     end
     results
   end
-  
+
   def language(text)
     process_text(text).max { |a,b| a[1] <=> b[1] }.first rescue nil
   end
-  
+
+  def language_iso(text)
+    ISO_CODES[language(text)]
+  end
+
   def self.filter_from_dictionary(filename)
     bf = BloominSimple.new(BITFIELD_WIDTH, &HASHER)
     File.open(filename).each { |word| bf.add(word) }
@@ -73,5 +101,9 @@ end
 class String
   def language
     WhatLanguage.new(:all).language(self)
+  end
+
+  def language_iso
+    WhatLanguage.new(:all).language_iso(self)
   end
 end

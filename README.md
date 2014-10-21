@@ -56,10 +56,11 @@ Return hash with scores for all relevant languages
 wl.process_text(text)
 ```
 
-Convenience method on String
+Convenience methods on String
 
 ```ruby
 "This is a test".language   # => :english
+"This is a test".language_iso   # => :en
 ```
 
 Initialize WhatLanguage with certain languages
