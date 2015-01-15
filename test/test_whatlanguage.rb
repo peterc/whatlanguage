@@ -7,7 +7,7 @@ begin
 rescue LoadError
 end
 
-require 'whatlanguage'
+require 'whatlanguage/string'
 
 class TestWhatLanguage < Test::Unit::TestCase
   def setup
