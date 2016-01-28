@@ -17,7 +17,7 @@ This library has been updated to be distributed and to work on modern Ruby imple
 Full Example
 
 ```ruby
-require 'whatlanguage/string'
+require 'whatlanguage'
 
 texts = []
 texts << %q{Deux autres personnes ont été arrêtées durant la nuit}
