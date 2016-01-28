@@ -106,10 +106,6 @@ class TestWhatLanguage < Test::Unit::TestCase
     assert_kind_of Hash, @wl.process_text("this is a test")
   end
 
-  def test_italian
-    assert_equal :italian, @wl.language("Roma, capitale dell'impero romano, è stata per secoli il centro politico e culturale della civiltà occidentale.")
-  end
-
   def test_language_selection
     selective_wl = WhatLanguage.new(:german, :english)
     assert_equal :german, selective_wl.language("der die das")
@@ -125,8 +121,9 @@ class TestWhatLanguage < Test::Unit::TestCase
     assert_equal :russian, selective_wl.language("Все новости в хронологическом порядке")
   end
 
-  def test_casing_conversion
-    skip unless defined? UnicodeUtils
-    assert_equal "âncora cor âmbar".language, "ÂNCORA COR ÂMBAR".language
+  if defined? UnicodeUtils
+    def test_casing_conversion
+      assert_equal "âncora cor âmbar".language, "ÂNCORA COR ÂMBAR".language
+    end
   end
 end

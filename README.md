@@ -2,15 +2,15 @@
 
 by Peter Cooper
 
-Text language detection. Quick, fast, memory efficient, and all in pure Ruby. Uses Bloom filters for aforementioned speed and memory benefits.
+Text language detection. Quick, fast, memory efficient, and all in pure Ruby. Uses Bloom filters for aforementioned speed and memory benefits. It works well on texts of over 10 words in length (e.g. blog posts or comments) and *very poorly* on short or Twitter-esque text, so be aware.
 
 Works with Dutch, English, Farsi, French, German, Italian, Pinyin, Swedish, Portuguese, Russian, Arabic, Finnish, Greek, Hebrew, Hungarian, Korean, Norwegian, Polish and Spanish out of the box.
 
 ## Important note
 
-This library was first built in 2007 and has received a few minor updates over the years. There are now more efficient and effective algorithms for doing language detection which I am investigating for a WhatLanguage 2.0.
+This library was first built in 2007 and has received only a few minor updates over the years. There are now more efficient and effective algorithms for doing language detection which I am investigating for a future WhatLanguage.
 
-This library has been updated to be distributed and to work on modern Ruby implementations but other than that, has had no improvements.
+This library has been updated to be distributed and to work on modern Ruby implementations but other than that, has had no significant improvements.
 
 ## Synopsis
 
@@ -86,13 +86,13 @@ require 'whatlanguage'
 
 ## Credits
 
-Contributions from Konrad Reiche and Salimane Adjao Moustapha appreciated.
+Contributions from Konrad Reiche, Salimane Adjao Moustapha, and others appreciated.
 
 ## License
 
 MIT License
 
-Copyright (c) 2007-2013 Peter Cooper
+Copyright (c) 2007-2016 Peter Cooper
 
 Permission is hereby granted, free of charge, to any person obtaining
 a copy of this software and associated documentation files (the
