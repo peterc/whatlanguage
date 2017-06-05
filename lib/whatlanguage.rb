@@ -56,7 +56,11 @@ class WhatLanguage
 
   # Very inefficient method for now.. but still beats the non-Bloom alternatives.
   # Change to better bit comparison technique later..
-  def process_text(text)
+  def process_text(text, options = {})
+    options = {
+      exit_early: true
+    }.merge options
+
     results = Hash.new(0)
     it = 0
     to_lowercase(text).split.each do |word|
@@ -67,7 +71,7 @@ class WhatLanguage
       end
 
       # Every now and then check to see if we have a really convincing result.. if so, exit early.
-      if it % 4 == 0 && results.size > 1
+      if options[:exit_early] && it % 4 == 0 && results.size > 1
         top_results = results.sort_by{|a,b| -b}[0..1]
 
         # Next line may need some tweaking one day..
