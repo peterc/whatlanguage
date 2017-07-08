@@ -26,7 +26,7 @@ texts << %q{En estado de máxima alertaen su nivel de crítico}
 texts << %q{Returns the object in enum with the maximum value.}
 texts << %q{Propose des données au sujet de la langue espagnole.}
 texts << %q{La palabra "mezquita" se usa en español para referirse a todo tipo de edificios dedicados.}
-texts << %q{اللغة التي هي هذه؟}
+texts << %q{أية لغة هذه؟}
 texts << %q{Mitä kieltä tämä on?}
 texts << %q{Ποια γλώσσα είναι αυτή;}
 texts << %q{באיזו שפה זה?}
