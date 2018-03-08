@@ -84,7 +84,7 @@ require 'whatlanguage'
 "Je suis un homme".language
 ```
 
-## Credits
+## Credits
 
 Contributions from Konrad Reiche, Salimane Adjao Moustapha, and others appreciated.
 
