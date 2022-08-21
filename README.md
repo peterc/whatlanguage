@@ -17,7 +17,7 @@ This library has been updated to be distributed and to work on modern Ruby imple
 Full Example
 
 ```ruby
-require 'whatlanguage'
+require 'whatlanguage/string'
 
 texts = []
 texts << %q{Deux autres personnes ont été arrêtées durant la nuit}
@@ -80,7 +80,7 @@ None, minor libraries (BloominSimple and BitField) included with this release.
 To test, go into irb, then:
 
 ```ruby
-require 'whatlanguage'
+require 'whatlanguage/string'
 "Je suis un homme".language
 ```
 
