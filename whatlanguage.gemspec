@@ -11,6 +11,7 @@ Gem::Specification.new do |gem|
   gem.description   = %q{WhatLanguage rapidly detects the language of a sample of text}
   gem.summary       = %q{Natural language detection for text samples}
   gem.homepage      = "https://github.com/peterc/whatlanguage"
+  gem.license       = "MIT"
 
   gem.files         = `git ls-files`.split($/).reject { |f| f.start_with?("wordlists") }
   gem.executables   = gem.files.grep(%r{^bin/}).map{ |f| File.basename(f) }
