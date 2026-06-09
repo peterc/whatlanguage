@@ -16,7 +16,7 @@ class WhatLanguageTest < Minitest::Test
   end
 
   def test_arabic
-    assert_equal :arabic, @wl.language("اللغة التي هي هذه؟")
+    assert_equal :arabic, @wl.language("أية لغة هذه؟")
   end
 
   def test_dutch
