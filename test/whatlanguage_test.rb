@@ -1,15 +1,8 @@
-# encoding: utf-8
-require "test/unit"
+# frozen_string_literal: true
 
-# not a dependency
-begin
-  require 'unicode_utils'
-rescue LoadError
-end
+require_relative "test_helper"
 
-require 'whatlanguage/string'
-
-class TestWhatLanguage < Test::Unit::TestCase
+class WhatLanguageTest < Minitest::Test
   def setup
     @wl = WhatLanguage.new(:all)
   end
@@ -99,7 +92,7 @@ class TestWhatLanguage < Test::Unit::TestCase
   end
 
   def test_something
-    assert_not_nil @wl.language("test")
+    refute_nil @wl.language("test")
   end
 
   def test_processor
@@ -112,7 +105,7 @@ class TestWhatLanguage < Test::Unit::TestCase
   end
 
   def test_language_selection_empty
-    selective_wl = WhatLanguage.new()
+    selective_wl = WhatLanguage.new
     assert_equal :russian, selective_wl.language("Все новости в хронологическом порядке")
   end
 
@@ -121,9 +114,7 @@ class TestWhatLanguage < Test::Unit::TestCase
     assert_equal :russian, selective_wl.language("Все новости в хронологическом порядке")
   end
 
-  if defined? UnicodeUtils
-    def test_casing_conversion
-      assert_equal "âncora cor âmbar".language, "ÂNCORA COR ÂMBAR".language
-    end
+  def test_casing_conversion
+    assert_equal "âncora cor âmbar".language, "ÂNCORA COR ÂMBAR".language
   end
 end

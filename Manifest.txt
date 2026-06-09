@@ -16,4 +16,5 @@ lang/spanish.lang
 lib/bitfield.rb
 lib/bloominsimple.rb
 lib/whatlanguage.rb
-test/test_whatlanguage.rb
+test/test_helper.rb
+test/whatlanguage_test.rb

@@ -93,9 +93,10 @@ class WhatLanguage
     bf
   end
 
-  if !defined? UnicodeUtils
-    define_method(:to_lowercase) { |str| str.downcase }
-  else
-    define_method(:to_lowercase) { |str| UnicodeUtils.casefold(str) }
+  # String#downcase has been fully Unicode-aware since Ruby 2.4, so the old
+  # optional unicode_utils dependency is no longer needed. The language
+  # filters are keyed on plain downcase, so match that here.
+  def to_lowercase(str)
+    str.downcase
   end
 end
