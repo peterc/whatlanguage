@@ -1,10 +1,11 @@
 # Builds all of the word lists in ./wordlists/ into filter files in ./lang/
 
-$LOAD_PATH.unshift File.expand_path('lib', __dir__)
+$LOAD_PATH.unshift File.expand_path('../lib', __dir__)
 require 'whatlanguage'
 
-languages_folder = File.join(File.dirname(__FILE__), "lang")
-wordlists_folder = File.join(File.dirname(__FILE__), "wordlists")
+project_root = File.expand_path('..', __dir__)
+languages_folder = File.join(project_root, "lang")
+wordlists_folder = File.join(project_root, "wordlists")
 
 Dir.entries(wordlists_folder).grep(/\w/).each do |lang|
   next if lang == 'generators'
