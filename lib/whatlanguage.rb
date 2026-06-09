@@ -3,6 +3,8 @@ require 'whatlanguage/bitfield'
 require 'digest/sha1'
 
 class WhatLanguage
+  # Words are folded with String#downcase, which has been fully Unicode-aware
+  # since Ruby 2.4. The language filters are keyed the same way, so lookups match.
   HASHER = lambda { |item| Digest::SHA1.digest(item.downcase.strip).unpack("VV".freeze) }
 
   BITFIELD_WIDTH = 2_000_000
@@ -59,7 +61,7 @@ class WhatLanguage
   def process_text(text)
     results = Hash.new(0)
     it = 0
-    to_lowercase(text).split.each do |word|
+    text.split.each do |word|
       it += 1
 
       languages.each do |lang|
@@ -91,12 +93,5 @@ class WhatLanguage
     bf = BloominSimple.new(BITFIELD_WIDTH, &HASHER)
     File.open(filename).each { |word| bf.add(word) }
     bf
-  end
-
-  # String#downcase has been fully Unicode-aware since Ruby 2.4, so the old
-  # optional unicode_utils dependency is no longer needed. The language
-  # filters are keyed on plain downcase, so match that here.
-  def to_lowercase(str)
-    str.downcase
   end
 end
