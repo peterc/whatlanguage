@@ -1,4 +1,5 @@
-require 'lib/whatlanguage'
+$LOAD_PATH.unshift File.expand_path('lib', __dir__)
+require 'whatlanguage/string'
 require 'benchmark'
 
 texts = []

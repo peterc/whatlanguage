@@ -1,6 +1,7 @@
 # Builds all of the word lists in ./wordlists/ into filter files in ./lang/
 
-require 'lib/whatlanguage'
+$LOAD_PATH.unshift File.expand_path('lib', __dir__)
+require 'whatlanguage'
 
 languages_folder = File.join(File.dirname(__FILE__), "lang")
 wordlists_folder = File.join(File.dirname(__FILE__), "wordlists")
