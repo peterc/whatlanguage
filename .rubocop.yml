@@ -1,0 +1,26 @@
+AllCops:
+  NewCops: enable
+  TargetRubyVersion: 3.0
+  Exclude:
+    - 'lib/whatlanguage/languages.rb'
+    - 'test/**/*'
+
+Layout:
+  Exclude:
+    - 'lib/whatlanguage.rb'
+
+Style:
+  Exclude:
+    - 'lib/whatlanguage.rb'
+
+Metrics:
+  Enabled: false
+
+Style/Documentation:
+  Enabled: false
+
+Gemspec/DevelopmentDependencies:
+  Enabled: false
+
+Gemspec/RequireMFA:
+  Enabled: false

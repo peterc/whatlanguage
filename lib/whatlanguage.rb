@@ -274,7 +274,7 @@ class WhatLanguage
   end
 
   # Space, ASCII punctuation, or digit: no value for script/language detection.
-  def stop_char?(cp)
-    cp <= 0x40 || (cp >= 0x5B && cp <= 0x60) || (cp >= 0x7B && cp <= 0x7E)
+  def stop_char?(codepoint)
+    codepoint <= 0x40 || (codepoint >= 0x5B && codepoint <= 0x60) || (codepoint >= 0x7B && codepoint <= 0x7E)
   end
 end
