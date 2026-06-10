@@ -2,4 +2,4 @@
 
 require "minitest/autorun"
 
-require "whatlanguage/string"
+require "whatlanguage"

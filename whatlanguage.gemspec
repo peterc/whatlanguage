@@ -12,10 +12,16 @@ Gem::Specification.new do |gem|
   gem.summary       = %q{Natural language detection for text samples}
   gem.homepage      = "https://github.com/peterc/whatlanguage"
   gem.license       = "MIT"
+  gem.required_ruby_version = ">= 3.0"
 
-  gem.files         = `git ls-files`.split($/).reject { |f| f.start_with?("wordlists") }
-  gem.executables   = gem.files.grep(%r{^bin/}).map{ |f| File.basename(f) }
-  gem.test_files    = gem.files.grep(%r{^(test|spec|features)/})
+  gem.files         = Dir["lib/**/*"] + [
+    "README.md",
+    "CHANGELOG.md",
+    "LICENSE.txt",
+    "Gemfile",
+    "Rakefile",
+    "whatlanguage.gemspec"
+  ]
   gem.require_paths = ["lib"]
 
   gem.add_development_dependency "minitest", "~> 5.0"

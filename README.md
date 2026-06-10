@@ -1,114 +1,72 @@
-# whatlanguage
+# whatlanguage: Pure Ruby Natural Language Detection Library
 
-by Peter Cooper
+Detects 160+ natural languages across more than 20 writing systems. Quick, fast, memory efficient, and all in pure Ruby. It works well on texts of several words or more in length. No dependencies; a 220KB JSON trigram file is included.
 
-Text language detection. Quick, fast, memory efficient, and all in pure Ruby. Uses Bloom filters for aforementioned speed and memory benefits. It works well on texts of over 10 words in length (e.g. blog posts or comments) and *very poorly* on short or Twitter-esque text, so be aware.
 
-Works with Dutch, English, Farsi, French, German, Italian, Pinyin, Swedish, Portuguese, Russian, Arabic, Finnish, Greek, Hebrew, Hungarian, Korean, Norwegian, Polish and Spanish out of the box.
+## Basic Usage
 
-## Important note
+Ruby 3.0+ is required.
 
-This library was first built in 2007 and has received only a few minor updates over the years. There are now more efficient and effective algorithms for doing language detection which I am investigating for a future WhatLanguage.
-
-This library has been updated to be distributed and to work on modern Ruby implementations but other than that, has had no significant improvements.
-
-## Synopsis
-
-Full Example
+Install with `gem install whatlanguage` or include `whatlanguage` in your bundle. Then:
 
 ```ruby
-require 'whatlanguage/string'
-
-texts = []
-texts << %q{Deux autres personnes ont été arrêtées durant la nuit}
-texts << %q{The links between the attempted car bombings in Glasgow and London are becoming clearer}
-texts << %q{En estado de máxima alertaen su nivel de crítico}
-texts << %q{Returns the object in enum with the maximum value.}
-texts << %q{Propose des données au sujet de la langue espagnole.}
-texts << %q{La palabra "mezquita" se usa en español para referirse a todo tipo de edificios dedicados.}
-texts << %q{أية لغة هذه؟}
-texts << %q{Mitä kieltä tämä on?}
-texts << %q{Ποια γλώσσα είναι αυτή;}
-texts << %q{באיזו שפה זה?}
-texts << %q{Milyen nyelv ez?}
-texts << %q{이 어떤 언어인가?}
-texts << %q{Hvilket språk er dette?}
-texts << %q{W jakim języku to jest?}
-
-texts.each { |text| puts "#{text[0..18]}... is in #{text.language.to_s.capitalize}" }
+require 'whatlanguage'
+p WhatLanguage.language("Que linguagem é essa? É uma pergunta muito interessante sobre a língua portuguesa")
+# => :portuguese
 ```
 
-Initialize WhatLanguage with all filters
+## How it works
+
+Detection is in two stages. First, the dominant Unicode script is detected; scripts used by a single language (Greek, Korean, Thai, Japanese using Hiragana/Katakana) resolve immediately. For scripts shared by several languages (e.g. Latin, Cyrillic, Arabic, Hebrew) trigrams are ranked by frequency and compared against candidate language profiles.
+
+The trigram profiles are vendored from [whatlang](https://github.com/greyblake/whatlang-rs), a port of [Franc](https://github.com/wooorm/franc), whose models are built from the public-domain UDHR corpus (see Credits). The model is a ~220 KB JSON file.
+
+> [!IMPORTANT]
+> v2.0 has many breaking changes as the entire library has been rewritten, though the core `WhatLanguage.language` API remains similar. Versions 1.0.6 and earlier (so the 2007-2025 run of the library) used a Bloom-filter technique and had 5MB of binary files to handle ~20 languages. Version 2.0 is more accurate, faster, and supports more languages from a single 220KB JSON file :-)
+
+## Further Usage
+
+Return a full detection result:
 
 ```ruby
-wl = WhatLanguage.new(:all)
+wl = WhatLanguage.new
+text = "Die Stadt plant neue Investitionen in den öffentlichen Verkehr"
+result = wl.detect(text)
+result.language   # => :german
+result.iso        # => :de
+result.score      # => 79018
+result.ranked     # => [[:german, 79018], [:dutch, 77631], ... ]
 ```
 
-Return language with best score
+Return ranked scores, or the raw score hash:
 
 ```ruby
-wl.language(text)
+wl.ranked(text)       # => [[:german, 79018], [:dutch, 77631], ... ]
+wl.score_hash(text)   # => { german: 79018, dutch: 77631, ... }
 ```
 
-Return hash with scores for all relevant languages
+Restrict candidate languages:
 
 ```ruby
-wl.process_text(text)
+wl = WhatLanguage.new(only: [:english, :german, :french])
 ```
 
-Convenience methods on String
+Short Latin-script fragments are ignored by default because there is not enough signal to rank shared-script languages reliably. The threshold applies to the statistical trigram stage; scripts that identify a single supported language, such as Greek, Korean, or Thai, can still resolve from shorter text. The threshold can be adjusted:
 
 ```ruby
-"This is a test".language   # => :english
-"This is a test".language_iso   # => :en
+wl = WhatLanguage.new(min_chars: 0)
 ```
 
-Initialize WhatLanguage with certain languages
+## Known limitations
 
-```ruby
-wl = WhatLanguage.new(:english, :german, :french)
-```
+- Short fragments are unreliable. For languages resolved by statistical comparison, fewer than 10 significant characters returns `nil` by default.
+- Scores are relative ranking values, not probabilities. Use `#ranked` or `#detect.ranked` when close runners-up matter.
+- Closely related written languages can be hard to separate, especially Norwegian Bokmål/Danish, Hebrew/Yiddish, and similar language pairs.
+- Kanji-only Japanese text can classify as Chinese because Han characters alone do not identify the language.
+- Romanized text is classified by Latin-script trigram profiles; it is not treated as native-script text.
 
-## Requirements
+## Credits
 
-None, minor libraries (BloominSimple and BitField) included with this release.
+Contributions from Konrad Reiche, Salimane Adjao Moustapha, Andrew Cone, Lasse Skindstad Ebert, Henrik Nyh, Daniel Sandbecker, Michael Hartl, Pedro Lambert, Tobias Preuss, Pepijn Looije, and others appreciated.
 
-## Installation
-
-    gem install whatlanguage
-
-To test, go into irb, then:
-
-```ruby
-require 'whatlanguage/string'
-"Je suis un homme".language
-```
-
-## Credits
-
-Contributions from Konrad Reiche, Salimane Adjao Moustapha, and others appreciated.
-
-## License
-
-MIT License
-
-Copyright (c) 2007-2016 Peter Cooper
-
-Permission is hereby granted, free of charge, to any person obtaining
-a copy of this software and associated documentation files (the
-'Software'), to deal in the Software without restriction, including
-without limitation the rights to use, copy, modify, merge, publish,
-distribute, sublicense, and/or sell copies of the Software, and to
-permit persons to whom the Software is furnished to do so, subject to
-the following conditions:
-
-The above copyright notice and this permission notice shall be
-included in all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED 'AS IS', WITHOUT WARRANTY OF ANY KIND,
-EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
-IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
-CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
-TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
-SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+The trigram language profiles in `lib/whatlanguage/trigrams.json` are taken from [whatlang](https://github.com/greyblake/whatlang-rs) (MIT, © Sergey Potapov), itself a derivative of [Franc](https://github.com/wooorm/franc) (MIT, © Titus Wormer). Those profiles are derived from the public-domain Universal Declaration of Human Rights translations.
