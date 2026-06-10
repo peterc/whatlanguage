@@ -13,7 +13,7 @@ WhatLanguage.language("Que linguagem é essa? É uma pergunta sobre a língua po
 - No runtime dependencies.
 - Supports 20+ writing systems.
 - Ships a compact ~220 KB trigram model.
-- Requires Ruby 3.0+
+- Requires Ruby 3.0+ (JRuby and TruffleRuby also good)
 - **Best on sentence-length text or longer.** Short texts can have ambiguous results.
 
 > [!IMPORTANT]
