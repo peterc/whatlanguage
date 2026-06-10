@@ -1,19 +1,20 @@
-# whatlanguage: Pure Ruby Natural Language Detection Library
+# whatlanguage
 
-Detects 160+ natural languages across more than 20 writing systems. Quick, fast, memory efficient, and all in pure Ruby. It works well on texts of several words or more in length. No dependencies; a 220KB JSON trigram file is included.
-
-
-## Basic Usage
-
-Ruby 3.0+ is required.
-
-Install with `gem install whatlanguage` or include `whatlanguage` in your bundle. Then:
+Pure Ruby natural language detection for 160+ languages.
 
 ```ruby
 require 'whatlanguage'
-p WhatLanguage.language("Que linguagem é essa? É uma pergunta muito interessante sobre a língua portuguesa")
+
+WhatLanguage.language("Que linguagem é essa? É uma pergunta sobre a língua portuguesa.")
 # => :portuguese
 ```
+
+- `gem install whatlanguage`
+- No runtime dependencies.
+- Supports 20+ writing systems.
+- Ships a compact ~220 KB trigram model.
+- Requires Ruby 3.0+
+- Best on sentence-length text or longer.
 
 ## How it works
 
@@ -24,7 +25,7 @@ The trigram profiles are vendored from [whatlang](https://github.com/greyblake/w
 > [!IMPORTANT]
 > v2.0 has many breaking changes as the entire library has been rewritten, though the core `WhatLanguage.language` API remains similar. Versions 1.0.6 and earlier (so the 2007-2025 run of the library) used a Bloom-filter technique and had 5MB of binary files to handle ~20 languages. Version 2.0 is more accurate, faster, and supports more languages from a single 220KB JSON file :-)
 
-## Further Usage
+## Usage
 
 Return a full detection result:
 
