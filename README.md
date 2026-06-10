@@ -14,7 +14,10 @@ WhatLanguage.language("Que linguagem é essa? É uma pergunta sobre a língua po
 - Supports 20+ writing systems.
 - Ships a compact ~220 KB trigram model.
 - Requires Ruby 3.0+
-- Best on sentence-length text or longer.
+- **Best on sentence-length text or longer.** Short texts can have ambiguous results.
+
+> [!IMPORTANT]
+> v2.0 has many breaking changes as the entire library has been reimplemented, though the core `WhatLanguage.language` API remains similar. Versions 1.0.6 and earlier (so the 2007-2025 run of the library) used a Bloom-filter technique and had 5MB of binary files to handle ~20 languages. Version 2.0 is more accurate, faster, and supports more languages from a single 220KB JSON file :-)
 
 ## How it works
 
@@ -22,8 +25,6 @@ Detection is in two stages. First, the dominant Unicode script is detected; scri
 
 The trigram profiles are vendored from [whatlang](https://github.com/greyblake/whatlang-rs), a port of [Franc](https://github.com/wooorm/franc), whose models are built from the public-domain UDHR corpus (see Credits). The model is a ~220 KB JSON file.
 
-> [!IMPORTANT]
-> v2.0 has many breaking changes as the entire library has been rewritten, though the core `WhatLanguage.language` API remains similar. Versions 1.0.6 and earlier (so the 2007-2025 run of the library) used a Bloom-filter technique and had 5MB of binary files to handle ~20 languages. Version 2.0 is more accurate, faster, and supports more languages from a single 220KB JSON file :-)
 
 ## Usage
 
