@@ -61,7 +61,7 @@ wl = WhatLanguage.new(min_chars: 0)
 
 ## Known limitations
 
-- Short fragments are unreliable. For languages resolved by statistical comparison, fewer than 10 significant characters returns `nil` by default.
+- Short fragments are unreliable. For languages resolved by statistical comparison, fewer than 10 significant characters returns `nil` by default. **This is the biggest thing I want to fix.** I think there should be a mechanism for "weighting" languages so that less likely languages don't frequently appear for small English samples, say.
 - Scores are relative ranking values, not probabilities. Use `#ranked` or `#detect.ranked` when close runners-up matter.
 - Closely related written languages can be hard to separate, especially Norwegian Bokmål/Danish, Hebrew/Yiddish, and similar language pairs.
 - Kanji-only Japanese text can classify as Chinese because Han characters alone do not identify the language.
