@@ -16,6 +16,7 @@ Gem::Specification.new do |gem|
   gem.required_ruby_version = '>= 3.0'
 
   gem.files = Dir['lib/**/*'] + [
+    'exe/whatlanguage',
     'README.md',
     'CHANGELOG.md',
     'LICENSE.txt',
@@ -23,6 +24,8 @@ Gem::Specification.new do |gem|
     'Rakefile',
     'whatlanguage.gemspec'
   ]
+  gem.bindir        = 'exe'
+  gem.executables   = ['whatlanguage']
   gem.require_paths = ['lib']
 
   gem.add_development_dependency 'minitest', '~> 5.0'

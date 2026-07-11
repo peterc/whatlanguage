@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+- Added a `whatlanguage` command-line executable that reads from files given as
+  arguments (or stdin) and prints the ISO 639 code of the detected language, or
+  `und` if undetermined. (#50, suggested by Keith Bennett)
+
 ## 2.0.0 / 2026-06-10
 
 - Rewrote the detection engine from scratch. Bloom-filter dictionary lookups are

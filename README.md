@@ -59,6 +59,17 @@ Short Latin-script fragments are ignored by default because there is not enough 
 wl = WhatLanguage.new(min_chars: 0)
 ```
 
+## Command line
+
+Installing the gem also installs a `whatlanguage` executable that reads from files given as arguments (or stdin) and prints the ISO 639 code of the detected language, or `und` if undetermined:
+
+```bash
+$ whatlanguage README.md
+en
+$ echo "Wie geht es dir heute?" | whatlanguage
+de
+```
+
 ## Known limitations
 
 - Short fragments are unreliable. For languages resolved by statistical comparison, fewer than 10 significant characters returns `nil` by default. **This is the biggest thing I want to fix.** I think there should be a mechanism for "weighting" languages so that less likely languages don't frequently appear for small English samples, say.
@@ -69,6 +80,6 @@ wl = WhatLanguage.new(min_chars: 0)
 
 ## Credits
 
-Contributions from Konrad Reiche, Salimane Adjao Moustapha, Andrew Cone, Lasse Skindstad Ebert, Henrik Nyh, Daniel Sandbecker, Michael Hartl, Pedro Lambert, Tobias Preuss, Pepijn Looije, and others appreciated.
+Contributions from Konrad Reiche, Salimane Adjao Moustapha, Andrew Cone, Lasse Skindstad Ebert, Henrik Nyh, Daniel Sandbecker, Michael Hartl, Pedro Lambert, Tobias Preuss, Pepijn Looije, Keith Bennett, and others appreciated.
 
 The trigram language profiles in `lib/whatlanguage/trigrams.json` are taken from [whatlang](https://github.com/greyblake/whatlang-rs) (MIT, © Sergey Potapov), itself a derivative of [Franc](https://github.com/wooorm/franc) (MIT, © Titus Wormer). Those profiles are derived from the public-domain Universal Declaration of Human Rights translations.

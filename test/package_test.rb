@@ -16,6 +16,7 @@ class PackageTest < Minitest::Test
       assert_includes files, "lib/whatlanguage.rb"
       assert_includes files, "lib/whatlanguage/languages.rb"
       assert_includes files, "lib/whatlanguage/trigrams.json"
+      assert_includes files, "exe/whatlanguage"
       refute_includes files, "lib/whatlanguage/string.rb"
       assert_empty files.grep(%r{\Atest/})
 

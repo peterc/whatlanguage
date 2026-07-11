@@ -1,0 +1,8 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require 'whatlanguage'
+
+# Reads from files given as arguments, or stdin otherwise. Prints the ISO 639
+# code of the detected language, or "und" (undetermined) if detection fails.
+puts WhatLanguage.language_iso(ARGF.read) || 'und'
