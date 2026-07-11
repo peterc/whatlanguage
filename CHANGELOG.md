@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 2.0.1 / 2026-07-11
 
 - Added a `whatlanguage` command-line executable that reads from files given as
   arguments (or stdin) and prints the ISO 639 code of the detected language, or
