@@ -21,7 +21,14 @@ WhatLanguage.language("Que linguagem é essa? É uma pergunta sobre a língua po
 
 ## How it works
 
-Detection is in two stages. First, the dominant Unicode script is detected; scripts used by a single language (Greek, Korean, Thai, Japanese using Hiragana/Katakana) resolve immediately. For scripts shared by several languages (e.g. Latin, Cyrillic, Arabic, Hebrew) trigrams are ranked by frequency and compared against candidate language profiles.
+> [!NOTE]
+> Version 2.1 improves Unicode and mixed-script Japanese handling and adds a fixed
+> preference for five widely spoken languages on short texts. The public API and
+> default 10-letter minimum for statistical detection are unchanged.
+
+Detection is in two stages. First, the dominant Unicode script is detected from letters; scripts used by a single supported language (Greek, Korean, Thai, Japanese using Hiragana/Katakana) resolve immediately. When kana is present, Han, Hiragana, and Katakana count together as Japanese, while a dominant unrelated script can still win. For scripts shared by several languages (e.g. Latin, Cyrillic, Arabic, Hebrew) trigrams are ranked by frequency and compared against candidate language profiles.
+
+Digits, punctuation, and emoji do not count toward the minimum text length and are treated as separators when extracting trigrams. Combining marks are preserved in trigrams but do not count as additional letters. Unicode script coverage follows the Unicode version supported by your Ruby runtime.
 
 The trigram profiles are vendored from [whatlang](https://github.com/greyblake/whatlang-rs), a port of [Franc](https://github.com/wooorm/franc), whose models are built from the public-domain UDHR corpus (see Credits). The model is a ~220 KB JSON file.
 
@@ -40,7 +47,7 @@ result.score      # => 79018
 result.ranked     # => [[:german, 79018], [:dutch, 77631], ... ]
 ```
 
-Return ranked scores, or the raw score hash:
+Return ranked scores, or the score hash:
 
 ```ruby
 wl.ranked(text)       # => [[:german, 79018], [:dutch, 77631], ... ]
@@ -53,7 +60,17 @@ Restrict candidate languages:
 wl = WhatLanguage.new(only: [:english, :german, :french])
 ```
 
-Short Latin-script fragments are ignored by default because there is not enough signal to rank shared-script languages reliably. The threshold applies to the statistical trigram stage; scripts that identify a single supported language, such as Greek, Korean, or Thai, can still resolve from shorter text. The threshold can be adjusted:
+For short texts, English, Chinese (Mandarin), Hindi, Spanish, and French receive
+a built-in preference. These five were selected using the
+[2025 total-speaker ranking](https://www.visualcapitalist.com/ranked-the-worlds-most-spoken-languages-in-2025/)
+(including second-language speakers). Eligible trigram candidates receive the
+same bonus: 600 ranking points through 10 letters, decreasing linearly to zero
+at 50 letters. Longer texts keep their original scores. The preference is not
+configurable; it respects `only:` and script detection. Chinese already resolves
+from its script, so it does not need a statistical bonus. Scores exposed by the
+API include the bonus and remain ranking values, not probabilities.
+
+Short shared-script fragments are ignored by default because there is not enough signal to rank their languages reliably. The threshold applies to the statistical trigram stage; scripts that identify a single supported language, such as Greek, Korean, or Thai, can still resolve from shorter text. The threshold can be adjusted:
 
 ```ruby
 wl = WhatLanguage.new(min_chars: 0)
@@ -72,7 +89,7 @@ de
 
 ## Known limitations
 
-- Short fragments are unreliable. For languages resolved by statistical comparison, fewer than 10 significant characters returns `nil` by default. **This is the biggest thing I want to fix.** I think there should be a mechanism for "weighting" languages so that less likely languages don't frequently appear for small English samples, say.
+- Short fragments remain unreliable. For languages resolved by statistical comparison, fewer than 10 letters returns `nil` by default. The built-in preference helps some common phrases, but can also favor a preferred language over a less widely spoken one when evidence is weak. It does not lower the minimum length.
 - Scores are relative ranking values, not probabilities. Use `#ranked` or `#detect.ranked` when close runners-up matter.
 - Closely related written languages can be hard to separate, especially Norwegian Bokmål/Danish, Hebrew/Yiddish, and similar language pairs.
 - Kanji-only Japanese text can classify as Chinese because Han characters alone do not identify the language.

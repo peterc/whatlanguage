@@ -1,5 +1,19 @@
 # Changelog
 
+## 2.1.0 / 2026-09-05
+
+- Added a fixed short-text preference for English, Chinese, Hindi, Spanish, and
+  French: a 600-point trigram bonus through 10 letters, fading to zero at 50.
+  Script routing, candidate restrictions, and minimum-length rules still apply.
+- Replaced hard-coded ranges with Unicode script properties, recognizing
+  uppercase Georgian, extended Greek, and supplementary Han letters.
+- Combined Han and kana when detecting Japanese instead of misclassifying
+  Han-heavy Japanese text as Chinese.
+- Excluded digits, punctuation, and emoji from script votes and minimum-length
+  counting, and treated them as trigram separators while preserving combining marks.
+- Added regression coverage for short texts and Unicode handling. Short-text
+  preferences are a heuristic; ambiguous fragments can still be misclassified.
+
 ## 2.0.1 / 2026-07-11
 
 - Added a `whatlanguage` command-line executable that reads from files given as
