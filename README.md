@@ -89,11 +89,11 @@ de
 
 ## Known limitations
 
-- Short fragments remain unreliable. For languages resolved by statistical comparison, fewer than 10 letters returns `nil` by default. The built-in preference helps some common phrases, but can also favor a preferred language over a less widely spoken one when evidence is weak. It does not lower the minimum length.
-- Scores are relative ranking values, not probabilities. Use `#ranked` or `#detect.ranked` when close runners-up matter.
-- Closely related written languages can be hard to separate, especially Norwegian Bokmål/Danish, Hebrew/Yiddish, and similar language pairs.
-- Kanji-only Japanese text can classify as Chinese because Han characters alone do not identify the language.
-- Romanized text is classified by Latin-script trigram profiles; it is not treated as native-script text.
+- Short texts can be ambiguous. Built-in preferences help some phrases but can bias others toward preferred languages. Statistical detection returns `nil` below 10 letters by default.
+- Scores indicate relative rank, not probability or confidence. Use `#ranked` to inspect alternatives.
+- Similar written languages, such as Norwegian Bokmål/Danish and Hebrew/Yiddish, can be confused.
+- Japanese without kana is classified as Chinese when Han is the dominant script.
+- Romanized text is compared with Latin-script profiles, so it may not resolve to its original language.
 
 ## Credits
 
