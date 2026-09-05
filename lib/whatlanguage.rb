@@ -9,6 +9,9 @@ class WhatLanguage
   MAX_TOTAL_DISTANCE   = MAX_TRIGRAM_DISTANCE * MAX_TRIGRAM_DISTANCE # 90_000
   TEXT_TRIGRAMS_SIZE   = 600
   DEFAULT_MIN_CHARS    = 10
+  SHORT_TEXT_PREFERENCES = %i[english chinese hindi spanish french].freeze
+  SHORT_TEXT_BONUS = 600
+  SHORT_TEXT_FADE_CHARS = 50
 
   Result = Struct.new(:language, :iso, :score, :ranked, keyword_init: true) do
     alias scores ranked
@@ -47,7 +50,8 @@ class WhatLanguage
 
   private_constant :MAX_TRIGRAM_DISTANCE, :MAX_TOTAL_DISTANCE, :TEXT_TRIGRAMS_SIZE,
                    :DEFAULT_MIN_CHARS, :DETERMINISTIC, :SCRIPT_PATTERNS, :ISO_CODES,
-                   :NAME_TO_CODE
+                   :NAME_TO_CODE, :SHORT_TEXT_PREFERENCES, :SHORT_TEXT_BONUS,
+                   :SHORT_TEXT_FADE_CHARS
 
   class << self
     def detect(text)
@@ -126,14 +130,17 @@ class WhatLanguage
 
     candidates = self.class.profiles[script]
     return results unless candidates
-    return results if significant_char_count(text) < @min_chars
+    char_count = significant_char_count(text)
+    return results if char_count < @min_chars
 
+    bonus = short_text_bonus(char_count)
     positions = trigram_positions(text)
     candidates.each do |code, trigrams|
       name = CODE_INFO[code].first
       next unless allowed?(name)
 
       results[name] = MAX_TOTAL_DISTANCE - distance(trigrams, positions)
+      results[name] += bonus if SHORT_TEXT_PREFERENCES.include?(name)
     end
     results
   end
@@ -167,6 +174,14 @@ class WhatLanguage
   end
 
   private
+
+  # A small fixed prior for widely spoken languages: full strength through ten
+  # letters, fading linearly to zero at fifty. These are ranking points, not
+  # probabilities. Script routing and the caller's candidate selection still win.
+  def short_text_bonus(char_count)
+    remaining = (SHORT_TEXT_FADE_CHARS - char_count).clamp(0, SHORT_TEXT_FADE_CHARS - DEFAULT_MIN_CHARS)
+    SHORT_TEXT_BONUS * remaining / (SHORT_TEXT_FADE_CHARS - DEFAULT_MIN_CHARS)
+  end
 
   def normalize_text(text)
     text.to_s.unicode_normalize(:nfkc)

@@ -103,6 +103,52 @@ class WhatLanguageTest < Minitest::Test
     refute_nil WhatLanguage.new(min_chars: 0).language("test")
   end
 
+  def test_short_text_preferences_improve_common_phrases
+    { "hello world" => :english, "good morning" => :english,
+      "please help" => :english, "buenos días" => :spanish,
+      "muchas gracias" => :spanish, "bonjour tout le monde" => :french,
+      "यह एक उदाहरण है" => :hindi }.each do |text, language|
+      assert_equal language, @wl.language(text), text
+    end
+  end
+
+  def test_short_text_preferences_with_lowered_minimum
+    detector = WhatLanguage.new(min_chars: 0)
+    assert_equal :french, detector.language("bonjour")
+    assert_equal :english, detector.language("thank you")
+  end
+
+  def test_short_text_preferences_respect_candidate_selection
+    detector = WhatLanguage.new(only: [:german, :dutch])
+    assert_equal [:dutch, :german], detector.score_hash("hello world").keys.sort
+  end
+
+  def test_short_text_preferences_allow_other_languages_to_win
+    assert_equal :german, @wl.language("der die das und eine deutsche Sprache")
+  end
+
+  def test_preferences_fade_and_leave_long_text_scores_unchanged
+    # Compare with unadjusted model scores to protect the length boundary and
+    # ensure non-preferred languages retain their original scores.
+    baseline_class = Class.new(WhatLanguage) do
+      private
+
+      def short_text_bonus(_char_count)
+        0
+      end
+    end
+    baseline = baseline_class.new
+    [10, 30, 49, 50, 80].each do |length|
+      text = ("this is a longer English sentence " * 4).scan(/\p{L}/).first(length).join
+      raw = baseline.score_hash(text)
+      adjusted = @wl.score_hash(text)
+      expected_bonus = { 10 => 600, 30 => 300, 49 => 15, 50 => 0, 80 => 0 }.fetch(length)
+      assert_equal expected_bonus, adjusted[:english] - raw[:english]
+      assert_equal raw[:german], adjusted[:german]
+      assert_equal raw, adjusted if length >= 50
+    end
+  end
+
   def test_score_hash
     assert_kind_of Hash, @wl.score_hash("this is a test")
   end
