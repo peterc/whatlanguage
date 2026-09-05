@@ -35,6 +35,62 @@ class WhatLanguageTest < Minitest::Test
     assert_equal :norwegian, selective.language("Norsk er et nordgermansk språk som snakkes av rundt fem millioner mennesker, hovedsakelig i Norge.")
   end
 
+  def test_japanese_combines_han_and_kana
+    ["東京都に住む", "日本語の文章です", "東京タワー", "漢字漢字あア"].each do |text|
+      assert_equal :japanese, @wl.language(text), text
+    end
+  end
+
+  def test_kana_does_not_override_dominant_unrelated_script
+    text = "This is a longer English sentence with enough common words あ"
+    assert_equal :english, @wl.language(text)
+  end
+
+  def test_han_without_kana_still_resolves_to_chinese
+    assert_equal :chinese, @wl.language("中文")
+    assert_equal :chinese, @wl.language("\u{20000}")
+  end
+
+  def test_japanese_script_handling_respects_selection
+    assert_equal :japanese, WhatLanguage.new(only: :japanese).language("日本語の文章です")
+    assert_nil WhatLanguage.new(only: :chinese).language("日本語の文章です")
+  end
+
+  def test_georgian_uppercase
+    assert_equal :georgian, @wl.language("ᲒᲐᲛᲐᲠᲯᲝᲑᲐ")
+  end
+
+  def test_greek_extended_letters
+    assert_equal :greek, @wl.language("ἀἁἂἃ")
+  end
+
+  def test_non_letters_do_not_identify_a_language
+    ["๑๒๓๔๕", "١٢٣٤٥", "१२३४५", "©®±×÷" * 3, "😀" * 12,
+     "。、！？", "\u0301" * 12, "ー"].each do |text|
+      assert_nil @wl.language(text), text
+      assert_nil WhatLanguage.new(min_chars: 0).language(text), text
+    end
+  end
+
+  def test_non_letters_do_not_pad_short_text
+    ["😀", "๑", "©", "—", "\u0301"].each do |padding|
+      assert_nil @wl.language("hi" + padding * 12), padding
+    end
+  end
+
+  def test_unicode_separators_do_not_pollute_trigrams
+    words = %w[this is a longer English sentence with enough common words]
+    expected = @wl.score_hash(words.join(" "))
+    ["—", "😀", "١", "。"].each do |separator|
+      assert_equal expected, @wl.score_hash(words.join(separator)), separator
+    end
+  end
+
+  def test_decomposed_accents_match_precomposed_text
+    text = "O relatório apresenta propostas para melhorar a educação e a saúde."
+    assert_equal @wl.score_hash(text), @wl.score_hash(text.unicode_normalize(:nfd))
+  end
+
   def test_nothing
     assert_nil @wl.language("")
   end

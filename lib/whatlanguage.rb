@@ -14,7 +14,7 @@ class WhatLanguage
     alias scores ranked
   end
 
-  # Scripts that resolve to a single language by their Unicode block alone.
+  # Scripts that resolve to a single supported language from their letters.
   # (Hiragana and Katakana both indicate Japanese.) Scripts NOT listed here but
   # present in the trigram dataset are disambiguated statistically instead.
   DETERMINISTIC = {
@@ -27,43 +27,13 @@ class WhatLanguage
     'Katakana'  => 'jpn'
   }.freeze
 
-  # Unicode ranges per script, in detection priority order (mirrors whatlang's
-  # scripts/detect.rs). The first script whose range contains a character claims
-  # that character; the script with the most characters wins.
-  SCRIPT_RANGES = [
-    ['Latin',      [[0x61,0x7A],[0x41,0x5A],[0x80,0xFF],[0x100,0x17F],[0x180,0x24F],
-                    [0x250,0x2AF],[0x1D00,0x1D7F],[0x1D80,0x1DBF],[0x1E00,0x1EFF],
-                    [0x2100,0x214F],[0x2C60,0x2C7F],[0xA720,0xA7FF],[0xAB30,0xAB6F]]],
-    ['Cyrillic',   [[0x400,0x484],[0x487,0x52F],[0x2DE0,0x2DFF],[0xA640,0xA69D],
-                    [0x1D2B,0x1D2B],[0x1D78,0x1D78],[0xA69F,0xA69F]]],
-    ['Arabic',     [[0x600,0x6FF],[0x750,0x7FF],[0x8A0,0x8FF],[0xFB50,0xFDFF],
-                    [0xFE70,0xFEFF],[0x10E60,0x10E7F],[0x1EE00,0x1EEFF]]],
-    ['Mandarin',   [[0x2E80,0x2E99],[0x2E9B,0x2EF3],[0x2F00,0x2FD5],[0x3005,0x3005],
-                    [0x3007,0x3007],[0x3021,0x3029],[0x3038,0x303B],[0x3400,0x4DB5],
-                    [0x4E00,0x9FCC],[0xF900,0xFA6D],[0xFA70,0xFAD9]]],
-    ['Devanagari', [[0x900,0x97F],[0xA8E0,0xA8FF],[0x1CD0,0x1CFF]]],
-    ['Hebrew',     [[0x590,0x5FF]]],
-    ['Ethiopic',   [[0x1200,0x139F],[0x2D80,0x2DDF],[0xAB00,0xAB2F]]],
-    ['Georgian',   [[0x10A0,0x10FF]]],
-    ['Bengali',    [[0x980,0x9FF]]],
-    ['Hangul',     [[0xAC00,0xD7AF],[0x1100,0x11FF],[0x3130,0x318F],[0x3200,0x32FF],
-                    [0xA960,0xA97F],[0xD7B0,0xD7FF]]],
-    ['Hiragana',   [[0x3040,0x309F]]],
-    ['Katakana',   [[0x30A0,0x30FF]]],
-    ['Greek',      [[0x370,0x3FF]]],
-    ['Kannada',    [[0xC80,0xCFF]]],
-    ['Tamil',      [[0xB80,0xBFF]]],
-    ['Thai',       [[0xE00,0xE7F]]],
-    ['Gujarati',   [[0xA80,0xAFF]]],
-    ['Gurmukhi',   [[0xA00,0xA7F]]],
-    ['Telugu',     [[0xC00,0xC7F]]],
-    ['Malayalam',  [[0xD00,0xD7F]]],
-    ['Oriya',      [[0xB00,0xB7F]]],
-    ['Myanmar',    [[0x1000,0x109F]]],
-    ['Sinhala',    [[0xD80,0xDFF]]],
-    ['Khmer',      [[0x1780,0x17FF],[0x19E0,0x19FF]]],
-    ['Armenian',   [[0x530,0x58F],[0xFB13,0xFB17]]]
-  ].freeze
+  # Unicode script properties include letters outside the original BMP blocks.
+  # Keep the model's historical "Mandarin" key for the Han script.
+  SCRIPT_PATTERNS = %w[
+    Latin Cyrillic Arabic Han Devanagari Hebrew Ethiopic Georgian Bengali
+    Hangul Hiragana Katakana Greek Kannada Tamil Thai Gujarati Gurmukhi
+    Telugu Malayalam Oriya Myanmar Sinhala Khmer Armenian
+  ].map { |script| [script == 'Han' ? 'Mandarin' : script, Regexp.new("\\p{#{script}}")] }.freeze
 
   # ISO 639-1 (with 639-3 fallback) lookup by language-name symbol, plus the
   # historical nil => nil entry. Internal; kept for backward compatibility.
@@ -76,7 +46,7 @@ class WhatLanguage
   end.freeze
 
   private_constant :MAX_TRIGRAM_DISTANCE, :MAX_TOTAL_DISTANCE, :TEXT_TRIGRAMS_SIZE,
-                   :DEFAULT_MIN_CHARS, :DETERMINISTIC, :SCRIPT_RANGES, :ISO_CODES,
+                   :DEFAULT_MIN_CHARS, :DETERMINISTIC, :SCRIPT_PATTERNS, :ISO_CODES,
                    :NAME_TO_CODE
 
   class << self
@@ -215,18 +185,17 @@ class WhatLanguage
   end
 
   def significant_char_count(text)
-    text.each_char.count { |ch| !stop_char?(ch.ord) }
+    text.each_char.count { |ch| /\p{L}/.match?(ch) }
   end
 
   # Dominant Unicode script of the text, or nil if it has no script characters.
   def detect_script(text)
     counts = Hash.new(0)
     text.each_char do |ch|
-      cp = ch.ord
-      next if stop_char?(cp)
+      next unless /\p{L}/.match?(ch)
 
-      SCRIPT_RANGES.each do |name, ranges|
-        if ranges.any? { |lo, hi| cp >= lo && cp <= hi }
+      SCRIPT_PATTERNS.each do |name, pattern|
+        if pattern.match?(ch)
           counts[name] += 1
           break
         end
@@ -234,14 +203,23 @@ class WhatLanguage
     end
     return nil if counts.empty?
 
+    # Japanese uses Han, Hiragana, and Katakana together. Combine their votes
+    # when kana is present, but still let a dominant unrelated script win.
+    if counts['Hiragana'] + counts['Katakana'] > 0
+      japanese = counts['Mandarin'] + counts['Hiragana'] + counts['Katakana']
+      counts.delete('Mandarin')
+      counts.delete('Katakana')
+      counts['Hiragana'] = japanese
+    end
+
     counts.max_by { |_name, n| n }.first
   end
 
   # Text trigrams ranked by descending frequency, mapped to their rank index.
-  # Mirrors whatlang's trigram extraction: punctuation/digits become spaces,
-  # the stream is bounded by spaces, and runs of spaces are collapsed.
+  # Non-letter/mark characters become spaces. Preserve combining marks used
+  # by the profiles; bound the stream by spaces and ignore repeated spaces.
   def trigram_positions(text)
-    chars = text.downcase.each_char.map { |c| stop_char?(c.ord) ? ' ' : c }
+    chars = text.downcase.each_char.map { |c| /[\p{L}\p{M}]/.match?(c) ? c : ' ' }
     return {} if chars.empty?
 
     occurrences = Hash.new(0)
@@ -271,10 +249,5 @@ class WhatLanguage
     count = positions.size
     total -= (MAX_TRIGRAM_DISTANCE - count) * MAX_TRIGRAM_DISTANCE if MAX_TRIGRAM_DISTANCE > count
     total.clamp(0, MAX_TOTAL_DISTANCE)
-  end
-
-  # Space, ASCII punctuation, or digit: no value for script/language detection.
-  def stop_char?(codepoint)
-    codepoint <= 0x40 || (codepoint >= 0x5B && codepoint <= 0x60) || (codepoint >= 0x7B && codepoint <= 0x7E)
   end
 end
