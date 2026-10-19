@@ -47,6 +47,16 @@ result.score      # => 79018
 result.ranked     # => [[:german, 79018], [:dutch, 77631], ... ]
 ```
 
+`result.iso` and `language_iso` return ISO 639-1 symbols with an ISO 639-3
+fallback. Selected individual languages use CLDR's macrolanguage aliases, such
+as Swahili `swh → sw`, Mandarin `cmn → zh`, and Western Farsi `pes → fa`;
+historical code mappings are also preserved. These aliases are a normalization
+policy, not a BCP 47 requirement: `swh` remains a valid individual-language
+subtag. Languages without a selected alias retain their individual codes.
+The CLI uses the same mapping. Codes are not necessarily unique: both
+`:northern_uzbek` and `:uzbek` return `:uz`. Use `result.language` to distinguish
+the language names.
+
 Return ranked scores, or the score hash:
 
 ```ruby

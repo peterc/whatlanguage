@@ -1,8 +1,12 @@
 # frozen_string_literal: true
 
-# AUTO-GENERATED from the ISO 639-3 registry + whatlang dataset codes.
+# Generated from the ISO 639-3 registry + whatlang dataset codes, with overrides.
 # Maps ISO 639-3 code => [language name symbol, ISO 639-1 (or 639-3 fallback) symbol].
 # Original gem languages keep their historical symbols and 2-letter codes.
+# Selected individual languages use CLDR's 2-letter macrolanguage aliases:
+# als, ayr, cmn, khk, knc, kng, pes, quz, src, swh, uzn. Preserve these overrides
+# when regenerating; do not map every macrolanguage member to its parent code.
+# Source: https://github.com/unicode-org/cldr/blob/main/common/supplemental/supplementalMetadata.xml
 class WhatLanguage
   CODE_INFO = {
     "ace"   => [:achinese,               :ace],
@@ -30,16 +34,16 @@ class WhatLanguage
     "cat"   => [:catalan,                :ca],
     "ceb"   => [:cebuano,                :ceb],
     "tzm"   => [:central_atlas_tamazight, :tzm],
-    "ayr"   => [:central_aymara,         :ayr],
+    "ayr"   => [:central_aymara,         :ay],
     "bcl"   => [:central_bikol,          :bcl],
-    "knc"   => [:central_kanuri,         :knc],
+    "knc"   => [:central_kanuri,         :kr],
     "nhn"   => [:central_nahuatl,        :nhn],
     "nya"   => [:chichewa,               :ny],
     "qug"   => [:chimborazo_highland_quichua, :qug],
     "cmn"   => [:chinese,                :zh],
     "cjk"   => [:chokwe,                 :cjk],
     "hrv"   => [:croatian,               :hr],
-    "quz"   => [:cusco_quechua,          :quz],
+    "quz"   => [:cusco_quechua,          :qu],
     "ces"   => [:czech,                  :cs],
     "dan"   => [:danish,                 :da],
     "nld"   => [:dutch,                  :nl],
@@ -61,7 +65,7 @@ class WhatLanguage
     "ell"   => [:greek,                  :el],
     "guj"   => [:gujarati,               :gu],
     "hat"   => [:haitian,                :ht],
-    "khk"   => [:halh_mongolian,         :khk],
+    "khk"   => [:halh_mongolian,         :mn],
     "hau"   => [:hausa,                  :ha],
     "heb"   => [:hebrew,                 :he],
     "hil"   => [:hiligaynon,             :hil],
@@ -82,14 +86,14 @@ class WhatLanguage
     "kin"   => [:kinyarwanda,            :rw],
     "kir"   => [:kirghiz,                :ky],
     "koi"   => [:komi_permyak,           :koi],
-    "kng"   => [:koongo,                 :kng],
+    "kng"   => [:koongo,                 :kg],
     "kor"   => [:korean,                 :ko],
     "kur"   => [:kurdish,                :ku],
     "lat"   => [:latin,                  :la],
     "lav"   => [:latvian,                :lv],
     "lin"   => [:lingala,                :ln],
     "lit"   => [:lithuanian,             :lt],
-    "src"   => [:logudorese_sardinian,   :src],
+    "src"   => [:logudorese_sardinian,   :sc],
     "nds"   => [:low_german,             :nds],
     "lua"   => [:luba_lulua,             :lua],
     "lun"   => [:lunda,                  :lun],
@@ -108,7 +112,7 @@ class WhatLanguage
     "ndo"   => [:ndonga,                 :ng],
     "nep"   => [:nepali,                 :ne],
     "dip"   => [:northeastern_dinka,     :dip],
-    "uzn"   => [:northern_uzbek,         :uzn],
+    "uzn"   => [:northern_uzbek,         :uz],
     "nob"   => [:norwegian,              :no],
     "nno"   => [:norwegian_nynorsk,      :nn],
     "nyn"   => [:nyankole,               :nyn],
@@ -137,7 +141,7 @@ class WhatLanguage
     "spa"   => [:spanish,                :es],
     "suk"   => [:sukuma,                 :suk],
     "sun"   => [:sundanese,              :su],
-    "swh"   => [:swahili,                :swh],
+    "swh"   => [:swahili,                :sw],
     "ssw"   => [:swati,                  :ss],
     "swe"   => [:swedish,                :sv],
     "tgl"   => [:tagalog,                :tl],
@@ -151,7 +155,7 @@ class WhatLanguage
     "tiv"   => [:tiv,                    :tiv],
     "tpi"   => [:tok_pisin,              :tpi],
     "toi"   => [:tonga,                  :toi],
-    "als"   => [:tosk_albanian,          :als],
+    "als"   => [:tosk_albanian,          :sq],
     "tso"   => [:tsonga,                 :ts],
     "tsn"   => [:tswana,                 :tn],
     "tur"   => [:turkish,                :tr],

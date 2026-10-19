@@ -21,6 +21,12 @@ class CliTest < Minitest::Test
     assert_equal "en", stdout.strip
   end
 
+  def test_prints_swahili_macrolanguage_code
+    stdout, stderr, status = run_cli(stdin_data: "Habari za asubuhi. Leo tunakwenda sokoni.")
+    assert status.success?, "cli failed\nstdout:\n#{stdout}\nstderr:\n#{stderr}"
+    assert_equal "sw", stdout.strip
+  end
+
   def test_prints_und_when_undetermined
     stdout, _stderr, status = run_cli(stdin_data: "zzz")
     assert status.success?

@@ -169,6 +169,8 @@ class WhatLanguage
   end
 
   # Most likely language as an ISO 639-1 symbol (639-3 fallback), or nil.
+  # Includes selected CLDR macrolanguage aliases and historical code overrides;
+  # see whatlanguage/languages.rb. Codes need not uniquely identify a language.
   def language_iso(text)
     detect(text)&.iso
   end

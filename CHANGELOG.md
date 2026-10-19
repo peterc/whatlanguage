@@ -1,5 +1,16 @@
 # Changelog
 
+## Unreleased
+
+- Normalize nine individual-language ISO outputs to CLDR macrolanguage aliases
+  (#51): `swh → sw`, `ayr → ay`, `knc → kr`, `quz → qu`, `khk → mn`,
+  `kng → kg`, `src → sc`, `uzn → uz`, and `als → sq`. This changes
+  `Result#iso`, instance/class `language_iso`, and CLI output; callers comparing
+  the previous codes must update those comparisons. Language names and detection
+  scores are unchanged. Northern Uzbek and Uzbek now both return `uz`.
+- Preserve the individual codes `quy`, `qug`, `koi`, and `min`, and document the
+  selected CLDR aliases and historical overrides used for ISO output.
+
 ## 2.1.0 / 2026-09-05
 
 - Added a fixed short-text preference for English, Chinese, Hindi, Spanish, and
