@@ -1,5 +1,8 @@
 # Indexed scoring benchmark
 
+This report covers the indexing change in `294e041`. For the subsequent scanning
+and allocation changes, see the [long-input benchmarks](long-inputs.md).
+
 Run from the repository root:
 
 ```sh

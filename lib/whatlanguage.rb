@@ -143,7 +143,7 @@ class WhatLanguage
   def score_hash(text)
     results = Hash.new(0)
     text = normalize_text(text)
-    script = detect_script(text)
+    script, char_count = script_and_letter_count(text)
     return results unless script
 
     if (code = DETERMINISTIC[script])
@@ -152,9 +152,8 @@ class WhatLanguage
       return results
     end
 
-    candidates = self.class.profiles[script]
+    candidates = candidates_for(script)
     return results unless candidates
-    char_count = significant_char_count(text)
     return results if char_count < @min_chars
 
     bonus = short_text_bonus(char_count)
@@ -202,14 +201,14 @@ class WhatLanguage
 
   # Most likely language as a name symbol, or nil when no language is detected.
   def language(text)
-    detect(text)&.language
+    score_hash(text).max_by { |_name, score| score }&.first
   end
 
   # Most likely language as an ISO 639-1 symbol (639-3 fallback), or nil.
   # Includes selected CLDR macrolanguage aliases and historical code overrides;
   # see whatlanguage/languages.rb. Codes need not uniquely identify a language.
   def language_iso(text)
-    detect(text)&.iso
+    ISO_CODES[language(text)]
   end
 
   private
@@ -230,6 +229,20 @@ class WhatLanguage
     @selection.include?(:all) || languages.include?(name)
   end
 
+  def candidates_for(script)
+    candidates = self.class.profiles[script]
+    return candidates unless candidates && !@selection.include?(:all)
+
+    # languages returns a mutable array. Invalidate the cached selection when
+    # callers change it, preserving the existing selection behavior.
+    wanted = languages
+    if @selected_languages != wanted
+      @selected_languages = wanted.dup
+      @selected_profiles = {}
+    end
+    @selected_profiles[script] ||= candidates.select { |code, _trigrams| allowed?(CODE_INFO[code].first) }
+  end
+
   def validate_selection!
     requested = @selection.reject { |name| name == :all }
     unknown = requested.reject { |name| self.class.languages.include?(NAME_ALIASES.fetch(name, name)) }
@@ -238,24 +251,30 @@ class WhatLanguage
     raise ArgumentError, "Unknown language selection: #{unknown.map(&:inspect).join(', ')}"
   end
 
-  def significant_char_count(text)
-    text.each_char.count { |ch| /\p{L}/.match?(ch) }
-  end
+  # Count all letters, including those outside the recognized scripts.
+  def script_and_letter_count(text)
+    if text.ascii_only?
+      letter_count = text.count('A-Za-z')
+      return [letter_count.zero? ? nil : 'Latin', letter_count]
+    end
 
-  # Dominant Unicode script of the text, or nil if it has no script characters.
-  def detect_script(text)
     counts = Hash.new(0)
+    letter_count = 0
     text.each_char do |ch|
       next unless /\p{L}/.match?(ch)
+      letter_count += 1
 
-      SCRIPT_PATTERNS.each do |name, pattern|
+      i = 0
+      while i < SCRIPT_PATTERNS.size
+        name, pattern = SCRIPT_PATTERNS[i]
         if pattern.match?(ch)
           counts[name] += 1
           break
         end
+        i += 1
       end
     end
-    return nil if counts.empty?
+    return [nil, letter_count] if counts.empty?
 
     # Japanese uses Han, Hiragana, and Katakana together. Combine their votes
     # when kana is present, but still let a dominant unrelated script win.
@@ -266,29 +285,73 @@ class WhatLanguage
       counts['Hiragana'] = japanese
     end
 
-    counts.max_by { |_name, n| n }.first
+    [counts.max_by { |_name, n| n }.first, letter_count]
   end
 
   # Text trigrams ranked by descending frequency, mapped to their rank index.
   # Non-letter/mark characters become spaces. Preserve combining marks used
   # by the profiles; bound the stream by spaces and ignore repeated spaces.
   def trigram_positions(text)
-    chars = text.downcase.each_char.map { |c| /[\p{L}\p{M}]/.match?(c) ? c : ' ' }
-    return {} if chars.empty?
-
-    occurrences = Hash.new(0)
-    c1 = ' '
-    c2 = chars[0]
-    (chars[1..] + [' ']).each do |c3|
-      occurrences[c1 + c2 + c3] += 1 unless c2 == ' ' && (c1 == ' ' || c3 == ' ')
-      c1 = c2
-      c2 = c3
-    end
-
-    ranked = occurrences.to_a.sort { |a, b| [b[1], b[0]] <=> [a[1], a[0]] }.first(TEXT_TRIGRAMS_SIZE)
+    text = text.downcase
+    occurrences = text.ascii_only? ? ascii_trigram_counts(text) : unicode_trigram_counts(text)
+    ranked = occurrences.to_a.sort! do |a, b|
+      order = b[1] <=> a[1]
+      order.zero? ? b[0] <=> a[0] : order
+    end.first(TEXT_TRIGRAMS_SIZE)
     positions = {}
     ranked.each_with_index { |(trigram, _count), i| positions[trigram] = i }
     positions
+  end
+
+  def unicode_trigram_counts(text)
+    occurrences = Hash.new(0)
+    trigram = +''
+    c1 = nil
+    c2 = ' '
+    text.each_char do |character|
+      c3 = /[\p{L}\p{M}]/.match?(character) ? character : ' '
+      if c1 && !(c2 == ' ' && (c1 == ' ' || c3 == ' '))
+        # Hash copies new String keys, so this buffer can be reused for every
+        # window without changing already-counted trigrams.
+        trigram.replace(c1) << c2 << c3
+        occurrences[trigram] += 1
+      end
+      c1 = c2
+      c2 = c3
+    end
+    if c1 && c2 != ' '
+      trigram.replace(c1) << c2 << ' '
+      occurrences[trigram] += 1
+    end
+
+    occurrences
+  end
+
+  # Lowercased ASCII has only a-z letters and no combining marks. Use byte
+  # values and a reusable three-byte key to avoid allocating character strings.
+  def ascii_trigram_counts(text)
+    occurrences = Hash.new(0)
+    trigram = +"\0\0\0"
+    c1 = nil
+    c2 = 32
+    text.each_byte do |byte|
+      c3 = byte.between?(97, 122) ? byte : 32
+      if c1 && !(c2 == 32 && (c1 == 32 || c3 == 32))
+        trigram.setbyte(0, c1)
+        trigram.setbyte(1, c2)
+        trigram.setbyte(2, c3)
+        occurrences[trigram] += 1
+      end
+      c1 = c2
+      c2 = c3
+    end
+    if c1 && c2 != 32
+      trigram.setbyte(0, c1)
+      trigram.setbyte(1, c2)
+      trigram.setbyte(2, 32)
+      occurrences[trigram] += 1
+    end
+    occurrences
   end
 
   # Out-of-place distance between a language's ordered trigram profile and the

@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Reduce text-processing allocations with rolling trigram windows and a shared
+  script/letter-count pass. Add an ASCII fast path, cache restricted candidates,
+  and avoid sorting when only the winning language is requested.
 - Speed up repeated detection over the full language set with shared trigram
   indexes, without changing scores or rankings. First calls and restricted
   selections retain the original scan. Add equivalence tests and benchmarks.

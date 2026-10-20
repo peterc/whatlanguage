@@ -32,10 +32,11 @@ Digits, punctuation, and emoji do not count toward the minimum text length and a
 
 The trigram profiles are vendored from [whatlang](https://github.com/greyblake/whatlang-rs), a port of [Franc](https://github.com/wooorm/franc), whose models are built from the public-domain UDHR corpus (see Credits). The model is a ~220 KB JSON file.
 
-When scoring against the full language set, repeated calls use a shared trigram
-index to look up matching profile entries. Scores and rankings are unchanged.
-A warmed 60-byte English sample ran about 15× faster on Ruby 4.0.2; see the
-[benchmarks](benchmark/README.md) for timings and index build/memory costs.
+Repeated calls over the full language set use a shared trigram index. A rolling
+window counts input trigrams without building a character array. Scores and
+rankings are unchanged. See the [indexing benchmarks](benchmark/README.md) and
+[long-input benchmarks](benchmark/long-inputs.md) for timings, allocations, and
+memory costs.
 
 ## Usage
 

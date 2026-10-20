@@ -51,12 +51,20 @@ if ARGV.first == "--worker"
 
   fixtures = JSON.parse(File.read(File.join(ROOT, "test/fixtures/accuracy_samples.json")))
                  .to_h { |entry| [entry.fetch("language"), entry.fetch("sample")] }
+  repeat_to_bytes = ->(text, bytes) { (text * (bytes / text.bytesize + 1)).byteslice(0, bytes).scrub("") }
+  random = Random.new(294041)
+  alphabet = ("a".."z").to_a + [" "]
+  diverse_latin = Array.new(5000) { alphabet.sample(random: random) }.join
   all = WhatLanguage.new
   cases = {
     "latin_short" => [all, SHORT_TEXT, 200],
     "latin_sentence" => [all, fixtures.fetch("english"), 150],
     "latin_10kb" => [all, (SHORT_TEXT * 170)[0, 10_000], 30],
     "latin_1mb" => [all, (SHORT_TEXT * 17_000)[0, 1_000_000], 1],
+    "latin_diverse_5kb" => [all, diverse_latin, 10],
+    "latin_accented_100kb" => [all, repeat_to_bytes.call(fixtures.fetch("portuguese"), 100_000), 3],
+    "cyrillic_100kb" => [all, repeat_to_bytes.call(fixtures.fetch("russian"), 100_000), 3],
+    "script_only_100kb" => [all, repeat_to_bytes.call(fixtures.fetch("japanese"), 100_000), 3],
     "cyrillic" => [all, fixtures.fetch("russian"), 150],
     "arabic" => [all, fixtures.fetch("arabic"), 150],
     "devanagari" => [all, fixtures.fetch("hindi"), 150],
@@ -69,15 +77,17 @@ if ARGV.first == "--worker"
     ],
     "only_1_language" => [WhatLanguage.new(only: :english), SHORT_TEXT, 200]
   }
-  measurements = cases.to_h do |name, (detector, text, iterations)|
-    (name == "latin_1mb" ? 2 : 20).times { detector.language(text) }
+  cases["detect_latin_short"] = [all, SHORT_TEXT, 200, :detect]
+  measurements = cases.to_h do |name, (detector, text, iterations, api)|
+    api ||= :language
+    (text.bytesize >= 100_000 ? 2 : 20).times { detector.public_send(api, text) }
     GC.start
     before = GC.stat(:total_allocated_objects)
-    elapsed = Benchmark.realtime { iterations.times { detector.language(text) } }
+    elapsed = Benchmark.realtime { iterations.times { detector.public_send(api, text) } }
     [name, {
       ms_per_call: elapsed * 1000 / iterations,
       allocations_per_call: (GC.stat(:total_allocated_objects) - before).to_f / iterations,
-      bytes: text.bytesize, iterations: iterations
+      bytes: text.bytesize, iterations: iterations, api: api
     }]
   end
   GC.start
@@ -119,7 +129,7 @@ Dir.mktmpdir("whatlanguage-baseline") do |directory|
     FileUtils.mkdir_p(File.dirname(target))
     File.write(target, capture!("git", "show", "#{revision}:#{path}"))
   end
-  libraries = { "baseline" => File.join(directory, "lib"), "indexed" => File.join(ROOT, "lib") }
+  libraries = { "baseline" => File.join(directory, "lib"), "current" => File.join(ROOT, "lib") }
   %w[warm cold].each do |mode|
     samples = libraries.to_h { |name, _lib| [name, []] }
     rounds.times do |round|
@@ -142,7 +152,7 @@ Dir.mktmpdir("whatlanguage-baseline") do |directory|
             max_ms: values.map { |value| value.fetch("ms_per_call") }.max
           }
         end
-        measurements["speedup"] = measurements["baseline"][:median_ms] / measurements["indexed"][:median_ms]
+        measurements["speedup"] = measurements["baseline"][:median_ms] / measurements["current"][:median_ms]
         [name, measurements]
       end
       report[:warm][:median_retained_heap_bytes] = samples.transform_values do |runs|
