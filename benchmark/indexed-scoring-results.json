@@ -1,0 +1,1534 @@
+{
+  "ruby": "ruby 4.0.2 (2026-03-17 revision d3da9fec82) +PRISM [arm64-darwin25]",
+  "platform": "arm64-darwin25",
+  "measured_at_utc": "2026-10-20T11:18:21Z",
+  "baseline_ref": "9507037db755ad0d297f899bef527200b80e9822",
+  "current_head": "9507037db755ad0d297f899bef527200b80e9822",
+  "working_tree_diff": "diff --git a/lib/whatlanguage.rb b/lib/whatlanguage.rb\nindex 6d5f7c8..1cd830d 100644\n--- a/lib/whatlanguage.rb\n+++ b/lib/whatlanguage.rb\n@@ -92,6 +92,30 @@ class WhatLanguage\n     def default_detector\n       @default_detector ||= new\n     end\n+\n+    # Shared index for a script: trigram => flat [candidate, rank, ...].\n+    # Use the direct scan on the first call: one-shot CLI use should not pay\n+    # to build an index. Flat arrays avoid an object for every posting.\n+    def profile_index(script)\n+      @profile_indexes ||= {}\n+      unless @profile_indexes.key?(script)\n+        @profile_indexes[script] = nil\n+        return\n+      end\n+\n+      @profile_indexes[script] ||= begin\n+        candidates = profiles.fetch(script)\n+        postings = {}\n+        candidates.each_with_index do |(_code, trigrams), candidate|\n+          trigrams.each_with_index do |trigram, rank|\n+            (postings[trigram] ||= []).push(candidate, rank)\n+          end\n+        end\n+        postings.each_value(&:freeze)\n+        missing = candidates.map { |_code, trigrams| trigrams.size * MAX_TRIGRAM_DISTANCE }\n+        [missing.freeze, postings.freeze].freeze\n+      end\n+    end\n   end\n \n   def initialize(*selection, only: nil, min_chars: DEFAULT_MIN_CHARS)\n@@ -135,12 +159,25 @@ class WhatLanguage\n \n     bonus = short_text_bonus(char_count)\n     positions = trigram_positions(text)\n-    candidates.each do |code, trigrams|\n-      name = CODE_INFO[code].first\n-      next unless allowed?(name)\n+    # Small selections retain the direct scan rather than visiting postings for\n+    # languages they cannot return.\n+    distances = indexed_distances(script, positions) if @selection.include?(:all)\n+    if distances\n+      candidates.each_with_index do |(code, _trigrams), i|\n+        name = CODE_INFO[code].first\n+        next unless allowed?(name)\n+\n+        results[name] = MAX_TOTAL_DISTANCE - distances[i]\n+        results[name] += bonus if SHORT_TEXT_PREFERENCES.include?(name)\n+      end\n+    else\n+      candidates.each do |code, trigrams|\n+        name = CODE_INFO[code].first\n+        next unless allowed?(name)\n \n-      results[name] = MAX_TOTAL_DISTANCE - distance(trigrams, positions)\n-      results[name] += bonus if SHORT_TEXT_PREFERENCES.include?(name)\n+        results[name] = MAX_TOTAL_DISTANCE - distance(trigrams, positions)\n+        results[name] += bonus if SHORT_TEXT_PREFERENCES.include?(name)\n+      end\n     end\n     results\n   end\n@@ -256,6 +293,29 @@ class WhatLanguage\n \n   # Out-of-place distance between a language's ordered trigram profile and the\n   # text's ranked trigrams. Lower means a closer match.\n+  def indexed_distances(script, positions)\n+    index = self.class.send(:profile_index, script)\n+    return unless index\n+\n+    missing, postings = index\n+    totals = missing.dup\n+    positions.each do |trigram, position|\n+      matches = postings[trigram]\n+      next unless matches\n+\n+      i = 0\n+      while i < matches.size\n+        # Replace the missing-trigram penalty with the exact rank distance.\n+        # This correction can be positive when the text rank is above 300.\n+        totals[matches[i]] += (position - matches[i + 1]).abs - MAX_TRIGRAM_DISTANCE\n+        i += 2\n+      end\n+    end\n+\n+    adjustment = [MAX_TRIGRAM_DISTANCE - positions.size, 0].max * MAX_TRIGRAM_DISTANCE\n+    totals.map! { |total| (total - adjustment).clamp(0, MAX_TOTAL_DISTANCE) }\n+  end\n+\n   def distance(profile, positions)\n     total = 0\n     profile.each_with_index do |trigram, i|\n",
+  "rounds": 7,
+  "warm": {
+    "raw_samples": {
+      "baseline": [
+        {
+          "cases": {
+            "latin_short": {
+              "ms_per_call": 2.0427750004455447,
+              "allocations_per_call": 1271.315,
+              "bytes": 60,
+              "iterations": 200
+            },
+            "latin_sentence": {
+              "ms_per_call": 2.0207733350495496,
+              "allocations_per_call": 3180.7466666666664,
+              "bytes": 156,
+              "iterations": 150
+            },
+            "latin_10kb": {
+              "ms_per_call": 6.541133330514033,
+              "allocations_per_call": 58550.0,
+              "bytes": 10000,
+              "iterations": 30
+            },
+            "latin_1mb": {
+              "ms_per_call": 489.4709996879101,
+              "allocations_per_call": 5751050.0,
+              "bytes": 1000000,
+              "iterations": 1
+            },
+            "cyrillic": {
+              "ms_per_call": 0.4723733353118102,
+              "allocations_per_call": 2851.88,
+              "bytes": 278,
+              "iterations": 150
+            },
+            "arabic": {
+              "ms_per_call": 0.2729133330285549,
+              "allocations_per_call": 2401.7466666666664,
+              "bytes": 243,
+              "iterations": 150
+            },
+            "devanagari": {
+              "ms_per_call": 0.29885999858379364,
+              "allocations_per_call": 2303.7533333333336,
+              "bytes": 328,
+              "iterations": 150
+            },
+            "hebrew": {
+              "ms_per_call": 0.22232000405589739,
+              "allocations_per_call": 2185.693333333333,
+              "bytes": 220,
+              "iterations": 150
+            },
+            "ethiopic": {
+              "ms_per_call": 0.12449999650319417,
+              "allocations_per_call": 678.06,
+              "bytes": 260,
+              "iterations": 150
+            },
+            "script_only": {
+              "ms_per_call": 0.05237000063061714,
+              "allocations_per_call": 139.0,
+              "bytes": 192,
+              "iterations": 200
+            },
+            "below_minimum": {
+              "ms_per_call": 0.0022399984300136566,
+              "allocations_per_call": 32.0,
+              "bytes": 5,
+              "iterations": 200
+            },
+            "only_3_languages": {
+              "ms_per_call": 0.12968999799340963,
+              "allocations_per_call": 1035.275,
+              "bytes": 60,
+              "iterations": 200
+            },
+            "only_1_language": {
+              "ms_per_call": 0.09535000193864107,
+              "allocations_per_call": 1031.275,
+              "bytes": 60,
+              "iterations": 200
+            }
+          },
+          "retained_heap_bytes": 4261996
+        },
+        {
+          "cases": {
+            "latin_short": {
+              "ms_per_call": 2.035910002887249,
+              "allocations_per_call": 1271.315,
+              "bytes": 60,
+              "iterations": 200
+            },
+            "latin_sentence": {
+              "ms_per_call": 2.023953335980574,
+              "allocations_per_call": 3180.7466666666664,
+              "bytes": 156,
+              "iterations": 150
+            },
+            "latin_10kb": {
+              "ms_per_call": 6.479266689469417,
+              "allocations_per_call": 58550.0,
+              "bytes": 10000,
+              "iterations": 30
+            },
+            "latin_1mb": {
+              "ms_per_call": 484.4549996778369,
+              "allocations_per_call": 5751050.0,
+              "bytes": 1000000,
+              "iterations": 1
+            },
+            "cyrillic": {
+              "ms_per_call": 0.4732000020643075,
+              "allocations_per_call": 2851.88,
+              "bytes": 278,
+              "iterations": 150
+            },
+            "arabic": {
+              "ms_per_call": 0.2718666692574819,
+              "allocations_per_call": 2401.7466666666664,
+              "bytes": 243,
+              "iterations": 150
+            },
+            "devanagari": {
+              "ms_per_call": 0.2960733324289322,
+              "allocations_per_call": 2303.7533333333336,
+              "bytes": 328,
+              "iterations": 150
+            },
+            "hebrew": {
+              "ms_per_call": 0.2212133320669333,
+              "allocations_per_call": 2185.693333333333,
+              "bytes": 220,
+              "iterations": 150
+            },
+            "ethiopic": {
+              "ms_per_call": 0.12276666859785716,
+              "allocations_per_call": 678.06,
+              "bytes": 260,
+              "iterations": 150
+            },
+            "script_only": {
+              "ms_per_call": 0.05272999871522188,
+              "allocations_per_call": 139.0,
+              "bytes": 192,
+              "iterations": 200
+            },
+            "below_minimum": {
+              "ms_per_call": 0.0022849999368190765,
+              "allocations_per_call": 32.0,
+              "bytes": 5,
+              "iterations": 200
+            },
+            "only_3_languages": {
+              "ms_per_call": 0.12870999984443188,
+              "allocations_per_call": 1035.275,
+              "bytes": 60,
+              "iterations": 200
+            },
+            "only_1_language": {
+              "ms_per_call": 0.09380999952554703,
+              "allocations_per_call": 1031.275,
+              "bytes": 60,
+              "iterations": 200
+            }
+          },
+          "retained_heap_bytes": 4261996
+        },
+        {
+          "cases": {
+            "latin_short": {
+              "ms_per_call": 2.0323750004172325,
+              "allocations_per_call": 1271.315,
+              "bytes": 60,
+              "iterations": 200
+            },
+            "latin_sentence": {
+              "ms_per_call": 2.026000004261732,
+              "allocations_per_call": 3180.7466666666664,
+              "bytes": 156,
+              "iterations": 150
+            },
+            "latin_10kb": {
+              "ms_per_call": 6.496433354914188,
+              "allocations_per_call": 58550.0,
+              "bytes": 10000,
+              "iterations": 30
+            },
+            "latin_1mb": {
+              "ms_per_call": 484.9279997870326,
+              "allocations_per_call": 5751050.0,
+              "bytes": 1000000,
+              "iterations": 1
+            },
+            "cyrillic": {
+              "ms_per_call": 0.4702000009516875,
+              "allocations_per_call": 2851.88,
+              "bytes": 278,
+              "iterations": 150
+            },
+            "arabic": {
+              "ms_per_call": 0.27018000061313313,
+              "allocations_per_call": 2401.7466666666664,
+              "bytes": 243,
+              "iterations": 150
+            },
+            "devanagari": {
+              "ms_per_call": 0.2935600032409032,
+              "allocations_per_call": 2303.7533333333336,
+              "bytes": 328,
+              "iterations": 150
+            },
+            "hebrew": {
+              "ms_per_call": 0.22128000234564146,
+              "allocations_per_call": 2185.693333333333,
+              "bytes": 220,
+              "iterations": 150
+            },
+            "ethiopic": {
+              "ms_per_call": 0.12451333304246266,
+              "allocations_per_call": 678.06,
+              "bytes": 260,
+              "iterations": 150
+            },
+            "script_only": {
+              "ms_per_call": 0.05180499982088804,
+              "allocations_per_call": 139.0,
+              "bytes": 192,
+              "iterations": 200
+            },
+            "below_minimum": {
+              "ms_per_call": 0.0022400030866265297,
+              "allocations_per_call": 32.0,
+              "bytes": 5,
+              "iterations": 200
+            },
+            "only_3_languages": {
+              "ms_per_call": 0.1290849968791008,
+              "allocations_per_call": 1035.275,
+              "bytes": 60,
+              "iterations": 200
+            },
+            "only_1_language": {
+              "ms_per_call": 0.09404500015079975,
+              "allocations_per_call": 1031.275,
+              "bytes": 60,
+              "iterations": 200
+            }
+          },
+          "retained_heap_bytes": 4261996
+        },
+        {
+          "cases": {
+            "latin_short": {
+              "ms_per_call": 2.020844998769462,
+              "allocations_per_call": 1271.315,
+              "bytes": 60,
+              "iterations": 200
+            },
+            "latin_sentence": {
+              "ms_per_call": 2.021826667090257,
+              "allocations_per_call": 3180.9466666666667,
+              "bytes": 156,
+              "iterations": 150
+            },
+            "latin_10kb": {
+              "ms_per_call": 6.5971000120043755,
+              "allocations_per_call": 58550.0,
+              "bytes": 10000,
+              "iterations": 30
+            },
+            "latin_1mb": {
+              "ms_per_call": 493.1570002809167,
+              "allocations_per_call": 5751050.0,
+              "bytes": 1000000,
+              "iterations": 1
+            },
+            "cyrillic": {
+              "ms_per_call": 0.47965333486596745,
+              "allocations_per_call": 2851.88,
+              "bytes": 278,
+              "iterations": 150
+            },
+            "arabic": {
+              "ms_per_call": 0.27684000010291737,
+              "allocations_per_call": 2401.7466666666664,
+              "bytes": 243,
+              "iterations": 150
+            },
+            "devanagari": {
+              "ms_per_call": 0.29531999801596004,
+              "allocations_per_call": 2303.7533333333336,
+              "bytes": 328,
+              "iterations": 150
+            },
+            "hebrew": {
+              "ms_per_call": 0.22747333471973738,
+              "allocations_per_call": 2185.693333333333,
+              "bytes": 220,
+              "iterations": 150
+            },
+            "ethiopic": {
+              "ms_per_call": 0.12382000063856442,
+              "allocations_per_call": 678.06,
+              "bytes": 260,
+              "iterations": 150
+            },
+            "script_only": {
+              "ms_per_call": 0.05307000130414963,
+              "allocations_per_call": 139.0,
+              "bytes": 192,
+              "iterations": 200
+            },
+            "below_minimum": {
+              "ms_per_call": 0.0022900011390447617,
+              "allocations_per_call": 32.0,
+              "bytes": 5,
+              "iterations": 200
+            },
+            "only_3_languages": {
+              "ms_per_call": 0.12839499861001968,
+              "allocations_per_call": 1035.275,
+              "bytes": 60,
+              "iterations": 200
+            },
+            "only_1_language": {
+              "ms_per_call": 0.09511999785900116,
+              "allocations_per_call": 1031.275,
+              "bytes": 60,
+              "iterations": 200
+            }
+          },
+          "retained_heap_bytes": 4261996
+        },
+        {
+          "cases": {
+            "latin_short": {
+              "ms_per_call": 2.0416449988260865,
+              "allocations_per_call": 1271.315,
+              "bytes": 60,
+              "iterations": 200
+            },
+            "latin_sentence": {
+              "ms_per_call": 2.0329333345095315,
+              "allocations_per_call": 3180.94,
+              "bytes": 156,
+              "iterations": 150
+            },
+            "latin_10kb": {
+              "ms_per_call": 6.588700010130803,
+              "allocations_per_call": 58550.0,
+              "bytes": 10000,
+              "iterations": 30
+            },
+            "latin_1mb": {
+              "ms_per_call": 486.24000046402216,
+              "allocations_per_call": 5751050.0,
+              "bytes": 1000000,
+              "iterations": 1
+            },
+            "cyrillic": {
+              "ms_per_call": 0.47113333518306416,
+              "allocations_per_call": 2851.88,
+              "bytes": 278,
+              "iterations": 150
+            },
+            "arabic": {
+              "ms_per_call": 0.27083999787767726,
+              "allocations_per_call": 2401.7466666666664,
+              "bytes": 243,
+              "iterations": 150
+            },
+            "devanagari": {
+              "ms_per_call": 0.2948533309002717,
+              "allocations_per_call": 2303.7533333333336,
+              "bytes": 328,
+              "iterations": 150
+            },
+            "hebrew": {
+              "ms_per_call": 0.22278000290195146,
+              "allocations_per_call": 2185.693333333333,
+              "bytes": 220,
+              "iterations": 150
+            },
+            "ethiopic": {
+              "ms_per_call": 0.12390000124772389,
+              "allocations_per_call": 678.06,
+              "bytes": 260,
+              "iterations": 150
+            },
+            "script_only": {
+              "ms_per_call": 0.051889996975660324,
+              "allocations_per_call": 139.0,
+              "bytes": 192,
+              "iterations": 200
+            },
+            "below_minimum": {
+              "ms_per_call": 0.0022449996322393417,
+              "allocations_per_call": 32.0,
+              "bytes": 5,
+              "iterations": 200
+            },
+            "only_3_languages": {
+              "ms_per_call": 0.12905999552458525,
+              "allocations_per_call": 1035.275,
+              "bytes": 60,
+              "iterations": 200
+            },
+            "only_1_language": {
+              "ms_per_call": 0.09484500158578157,
+              "allocations_per_call": 1031.275,
+              "bytes": 60,
+              "iterations": 200
+            }
+          },
+          "retained_heap_bytes": 4261996
+        },
+        {
+          "cases": {
+            "latin_short": {
+              "ms_per_call": 2.038834998384118,
+              "allocations_per_call": 1271.315,
+              "bytes": 60,
+              "iterations": 200
+            },
+            "latin_sentence": {
+              "ms_per_call": 1.9911199994385242,
+              "allocations_per_call": 3180.7466666666664,
+              "bytes": 156,
+              "iterations": 150
+            },
+            "latin_10kb": {
+              "ms_per_call": 6.4768000195423765,
+              "allocations_per_call": 58550.0,
+              "bytes": 10000,
+              "iterations": 30
+            },
+            "latin_1mb": {
+              "ms_per_call": 487.1680000796914,
+              "allocations_per_call": 5751050.0,
+              "bytes": 1000000,
+              "iterations": 1
+            },
+            "cyrillic": {
+              "ms_per_call": 0.47755333284537,
+              "allocations_per_call": 2851.88,
+              "bytes": 278,
+              "iterations": 150
+            },
+            "arabic": {
+              "ms_per_call": 0.27012666687369347,
+              "allocations_per_call": 2401.7466666666664,
+              "bytes": 243,
+              "iterations": 150
+            },
+            "devanagari": {
+              "ms_per_call": 0.2933533303439617,
+              "allocations_per_call": 2303.7533333333336,
+              "bytes": 328,
+              "iterations": 150
+            },
+            "hebrew": {
+              "ms_per_call": 0.22203999881943068,
+              "allocations_per_call": 2185.693333333333,
+              "bytes": 220,
+              "iterations": 150
+            },
+            "ethiopic": {
+              "ms_per_call": 0.12435999388496081,
+              "allocations_per_call": 678.06,
+              "bytes": 260,
+              "iterations": 150
+            },
+            "script_only": {
+              "ms_per_call": 0.0519599998369813,
+              "allocations_per_call": 139.0,
+              "bytes": 192,
+              "iterations": 200
+            },
+            "below_minimum": {
+              "ms_per_call": 0.002215001732110977,
+              "allocations_per_call": 32.0,
+              "bytes": 5,
+              "iterations": 200
+            },
+            "only_3_languages": {
+              "ms_per_call": 0.12893000151962042,
+              "allocations_per_call": 1035.275,
+              "bytes": 60,
+              "iterations": 200
+            },
+            "only_1_language": {
+              "ms_per_call": 0.09713000152260065,
+              "allocations_per_call": 1031.275,
+              "bytes": 60,
+              "iterations": 200
+            }
+          },
+          "retained_heap_bytes": 4261996
+        },
+        {
+          "cases": {
+            "latin_short": {
+              "ms_per_call": 2.015404999256134,
+              "allocations_per_call": 1271.315,
+              "bytes": 60,
+              "iterations": 200
+            },
+            "latin_sentence": {
+              "ms_per_call": 2.0073733292520046,
+              "allocations_per_call": 3180.9533333333334,
+              "bytes": 156,
+              "iterations": 150
+            },
+            "latin_10kb": {
+              "ms_per_call": 6.488500007738669,
+              "allocations_per_call": 58550.0,
+              "bytes": 10000,
+              "iterations": 30
+            },
+            "latin_1mb": {
+              "ms_per_call": 484.19300001114607,
+              "allocations_per_call": 5751050.0,
+              "bytes": 1000000,
+              "iterations": 1
+            },
+            "cyrillic": {
+              "ms_per_call": 0.4681799995402495,
+              "allocations_per_call": 2851.88,
+              "bytes": 278,
+              "iterations": 150
+            },
+            "arabic": {
+              "ms_per_call": 0.27230000123381615,
+              "allocations_per_call": 2401.7466666666664,
+              "bytes": 243,
+              "iterations": 150
+            },
+            "devanagari": {
+              "ms_per_call": 0.29554666951298714,
+              "allocations_per_call": 2303.7533333333336,
+              "bytes": 328,
+              "iterations": 150
+            },
+            "hebrew": {
+              "ms_per_call": 0.22149999936421713,
+              "allocations_per_call": 2185.693333333333,
+              "bytes": 220,
+              "iterations": 150
+            },
+            "ethiopic": {
+              "ms_per_call": 0.12407333279649417,
+              "allocations_per_call": 678.06,
+              "bytes": 260,
+              "iterations": 150
+            },
+            "script_only": {
+              "ms_per_call": 0.05224499851465225,
+              "allocations_per_call": 139.0,
+              "bytes": 192,
+              "iterations": 200
+            },
+            "below_minimum": {
+              "ms_per_call": 0.0022700009867548943,
+              "allocations_per_call": 32.0,
+              "bytes": 5,
+              "iterations": 200
+            },
+            "only_3_languages": {
+              "ms_per_call": 0.1296450011432171,
+              "allocations_per_call": 1035.275,
+              "bytes": 60,
+              "iterations": 200
+            },
+            "only_1_language": {
+              "ms_per_call": 0.09405499789863825,
+              "allocations_per_call": 1031.275,
+              "bytes": 60,
+              "iterations": 200
+            }
+          },
+          "retained_heap_bytes": 4261996
+        }
+      ],
+      "indexed": [
+        {
+          "cases": {
+            "latin_short": {
+              "ms_per_call": 0.1332999998703599,
+              "allocations_per_call": 1152.045,
+              "bytes": 60,
+              "iterations": 200
+            },
+            "latin_sentence": {
+              "ms_per_call": 0.2994200028479099,
+              "allocations_per_call": 3060.366666666667,
+              "bytes": 156,
+              "iterations": 150
+            },
+            "latin_10kb": {
+              "ms_per_call": 4.561433320244153,
+              "allocations_per_call": 58375.23333333333,
+              "bytes": 10000,
+              "iterations": 30
+            },
+            "latin_1mb": {
+              "ms_per_call": 490.19400030374527,
+              "allocations_per_call": 5750876.0,
+              "bytes": 1000000,
+              "iterations": 1
+            },
+            "cyrillic": {
+              "ms_per_call": 0.22635333240032196,
+              "allocations_per_call": 2837.3,
+              "bytes": 278,
+              "iterations": 150
+            },
+            "arabic": {
+              "ms_per_call": 0.19071999937295914,
+              "allocations_per_call": 2398.4466666666667,
+              "bytes": 243,
+              "iterations": 150
+            },
+            "devanagari": {
+              "ms_per_call": 0.19632666682203612,
+              "allocations_per_call": 2299.32,
+              "bytes": 328,
+              "iterations": 150
+            },
+            "hebrew": {
+              "ms_per_call": 0.1923199991385142,
+              "allocations_per_call": 2185.4933333333333,
+              "bytes": 220,
+              "iterations": 150
+            },
+            "ethiopic": {
+              "ms_per_call": 0.09574666619300842,
+              "allocations_per_call": 678.06,
+              "bytes": 260,
+              "iterations": 150
+            },
+            "script_only": {
+              "ms_per_call": 0.05228499881923199,
+              "allocations_per_call": 139.0,
+              "bytes": 192,
+              "iterations": 200
+            },
+            "below_minimum": {
+              "ms_per_call": 0.002250000834465027,
+              "allocations_per_call": 32.0,
+              "bytes": 5,
+              "iterations": 200
+            },
+            "only_3_languages": {
+              "ms_per_call": 0.1286950008943677,
+              "allocations_per_call": 1035.005,
+              "bytes": 60,
+              "iterations": 200
+            },
+            "only_1_language": {
+              "ms_per_call": 0.09278499986976385,
+              "allocations_per_call": 1031.005,
+              "bytes": 60,
+              "iterations": 200
+            }
+          },
+          "retained_heap_bytes": 6426191
+        },
+        {
+          "cases": {
+            "latin_short": {
+              "ms_per_call": 0.13308000285178423,
+              "allocations_per_call": 1152.045,
+              "bytes": 60,
+              "iterations": 200
+            },
+            "latin_sentence": {
+              "ms_per_call": 0.29404666274785995,
+              "allocations_per_call": 3060.366666666667,
+              "bytes": 156,
+              "iterations": 150
+            },
+            "latin_10kb": {
+              "ms_per_call": 4.56603333974878,
+              "allocations_per_call": 58375.13333333333,
+              "bytes": 10000,
+              "iterations": 30
+            },
+            "latin_1mb": {
+              "ms_per_call": 487.93300054967403,
+              "allocations_per_call": 5750876.0,
+              "bytes": 1000000,
+              "iterations": 1
+            },
+            "cyrillic": {
+              "ms_per_call": 0.22826000427206358,
+              "allocations_per_call": 2837.3,
+              "bytes": 278,
+              "iterations": 150
+            },
+            "arabic": {
+              "ms_per_call": 0.1901799999177456,
+              "allocations_per_call": 2398.4466666666667,
+              "bytes": 243,
+              "iterations": 150
+            },
+            "devanagari": {
+              "ms_per_call": 0.1969200000166893,
+              "allocations_per_call": 2299.32,
+              "bytes": 328,
+              "iterations": 150
+            },
+            "hebrew": {
+              "ms_per_call": 0.19217333445946375,
+              "allocations_per_call": 2185.4933333333333,
+              "bytes": 220,
+              "iterations": 150
+            },
+            "ethiopic": {
+              "ms_per_call": 0.09651333093643188,
+              "allocations_per_call": 678.06,
+              "bytes": 260,
+              "iterations": 150
+            },
+            "script_only": {
+              "ms_per_call": 0.052954996936023235,
+              "allocations_per_call": 139.0,
+              "bytes": 192,
+              "iterations": 200
+            },
+            "below_minimum": {
+              "ms_per_call": 0.0022849999368190765,
+              "allocations_per_call": 32.0,
+              "bytes": 5,
+              "iterations": 200
+            },
+            "only_3_languages": {
+              "ms_per_call": 0.12948499992489815,
+              "allocations_per_call": 1035.005,
+              "bytes": 60,
+              "iterations": 200
+            },
+            "only_1_language": {
+              "ms_per_call": 0.09648500010371208,
+              "allocations_per_call": 1031.005,
+              "bytes": 60,
+              "iterations": 200
+            }
+          },
+          "retained_heap_bytes": 6426191
+        },
+        {
+          "cases": {
+            "latin_short": {
+              "ms_per_call": 0.13225500006228685,
+              "allocations_per_call": 1152.045,
+              "bytes": 60,
+              "iterations": 200
+            },
+            "latin_sentence": {
+              "ms_per_call": 0.30795333286126453,
+              "allocations_per_call": 3060.366666666667,
+              "bytes": 156,
+              "iterations": 150
+            },
+            "latin_10kb": {
+              "ms_per_call": 4.6835666832824545,
+              "allocations_per_call": 58375.23333333333,
+              "bytes": 10000,
+              "iterations": 30
+            },
+            "latin_1mb": {
+              "ms_per_call": 489.4690001383424,
+              "allocations_per_call": 5750876.0,
+              "bytes": 1000000,
+              "iterations": 1
+            },
+            "cyrillic": {
+              "ms_per_call": 0.2306733342508475,
+              "allocations_per_call": 2837.3,
+              "bytes": 278,
+              "iterations": 150
+            },
+            "arabic": {
+              "ms_per_call": 0.19182666515310606,
+              "allocations_per_call": 2398.4466666666667,
+              "bytes": 243,
+              "iterations": 150
+            },
+            "devanagari": {
+              "ms_per_call": 0.2011400026579698,
+              "allocations_per_call": 2299.32,
+              "bytes": 328,
+              "iterations": 150
+            },
+            "hebrew": {
+              "ms_per_call": 0.19475333392620087,
+              "allocations_per_call": 2185.4933333333333,
+              "bytes": 220,
+              "iterations": 150
+            },
+            "ethiopic": {
+              "ms_per_call": 0.0951400026679039,
+              "allocations_per_call": 678.06,
+              "bytes": 260,
+              "iterations": 150
+            },
+            "script_only": {
+              "ms_per_call": 0.053330003283917904,
+              "allocations_per_call": 139.0,
+              "bytes": 192,
+              "iterations": 200
+            },
+            "below_minimum": {
+              "ms_per_call": 0.002254997380077839,
+              "allocations_per_call": 32.0,
+              "bytes": 5,
+              "iterations": 200
+            },
+            "only_3_languages": {
+              "ms_per_call": 0.12814499903470278,
+              "allocations_per_call": 1035.005,
+              "bytes": 60,
+              "iterations": 200
+            },
+            "only_1_language": {
+              "ms_per_call": 0.09529999922960997,
+              "allocations_per_call": 1031.005,
+              "bytes": 60,
+              "iterations": 200
+            }
+          },
+          "retained_heap_bytes": 6426191
+        },
+        {
+          "cases": {
+            "latin_short": {
+              "ms_per_call": 0.13457000255584717,
+              "allocations_per_call": 1152.045,
+              "bytes": 60,
+              "iterations": 200
+            },
+            "latin_sentence": {
+              "ms_per_call": 0.2948666674395402,
+              "allocations_per_call": 3060.366666666667,
+              "bytes": 156,
+              "iterations": 150
+            },
+            "latin_10kb": {
+              "ms_per_call": 4.702533346911271,
+              "allocations_per_call": 58375.23333333333,
+              "bytes": 10000,
+              "iterations": 30
+            },
+            "latin_1mb": {
+              "ms_per_call": 494.00500021874905,
+              "allocations_per_call": 5750876.0,
+              "bytes": 1000000,
+              "iterations": 1
+            },
+            "cyrillic": {
+              "ms_per_call": 0.22958000500996908,
+              "allocations_per_call": 2837.3,
+              "bytes": 278,
+              "iterations": 150
+            },
+            "arabic": {
+              "ms_per_call": 0.19211333245038986,
+              "allocations_per_call": 2398.4466666666667,
+              "bytes": 243,
+              "iterations": 150
+            },
+            "devanagari": {
+              "ms_per_call": 0.2024466668566068,
+              "allocations_per_call": 2299.32,
+              "bytes": 328,
+              "iterations": 150
+            },
+            "hebrew": {
+              "ms_per_call": 0.1936399998764197,
+              "allocations_per_call": 2185.4933333333333,
+              "bytes": 220,
+              "iterations": 150
+            },
+            "ethiopic": {
+              "ms_per_call": 0.09465999901294708,
+              "allocations_per_call": 678.06,
+              "bytes": 260,
+              "iterations": 150
+            },
+            "script_only": {
+              "ms_per_call": 0.05295500159263611,
+              "allocations_per_call": 139.0,
+              "bytes": 192,
+              "iterations": 200
+            },
+            "below_minimum": {
+              "ms_per_call": 0.0023349979892373085,
+              "allocations_per_call": 32.0,
+              "bytes": 5,
+              "iterations": 200
+            },
+            "only_3_languages": {
+              "ms_per_call": 0.13056500349193811,
+              "allocations_per_call": 1035.005,
+              "bytes": 60,
+              "iterations": 200
+            },
+            "only_1_language": {
+              "ms_per_call": 0.09453500155359507,
+              "allocations_per_call": 1031.005,
+              "bytes": 60,
+              "iterations": 200
+            }
+          },
+          "retained_heap_bytes": 6426191
+        },
+        {
+          "cases": {
+            "latin_short": {
+              "ms_per_call": 0.13332499656826258,
+              "allocations_per_call": 1152.045,
+              "bytes": 60,
+              "iterations": 200
+            },
+            "latin_sentence": {
+              "ms_per_call": 0.29436000312368077,
+              "allocations_per_call": 3060.366666666667,
+              "bytes": 156,
+              "iterations": 150
+            },
+            "latin_10kb": {
+              "ms_per_call": 4.534766667832931,
+              "allocations_per_call": 58375.23333333333,
+              "bytes": 10000,
+              "iterations": 30
+            },
+            "latin_1mb": {
+              "ms_per_call": 498.02600033581257,
+              "allocations_per_call": 5750876.0,
+              "bytes": 1000000,
+              "iterations": 1
+            },
+            "cyrillic": {
+              "ms_per_call": 0.23377333457271257,
+              "allocations_per_call": 2837.3,
+              "bytes": 278,
+              "iterations": 150
+            },
+            "arabic": {
+              "ms_per_call": 0.19211333245038986,
+              "allocations_per_call": 2398.4466666666667,
+              "bytes": 243,
+              "iterations": 150
+            },
+            "devanagari": {
+              "ms_per_call": 0.2007600044210752,
+              "allocations_per_call": 2299.32,
+              "bytes": 328,
+              "iterations": 150
+            },
+            "hebrew": {
+              "ms_per_call": 0.19443999975919724,
+              "allocations_per_call": 2185.4933333333333,
+              "bytes": 220,
+              "iterations": 150
+            },
+            "ethiopic": {
+              "ms_per_call": 0.09645999719699223,
+              "allocations_per_call": 678.06,
+              "bytes": 260,
+              "iterations": 150
+            },
+            "script_only": {
+              "ms_per_call": 0.05205499939620495,
+              "allocations_per_call": 139.0,
+              "bytes": 192,
+              "iterations": 200
+            },
+            "below_minimum": {
+              "ms_per_call": 0.0022499961778521538,
+              "allocations_per_call": 32.0,
+              "bytes": 5,
+              "iterations": 200
+            },
+            "only_3_languages": {
+              "ms_per_call": 0.1283100014552474,
+              "allocations_per_call": 1035.005,
+              "bytes": 60,
+              "iterations": 200
+            },
+            "only_1_language": {
+              "ms_per_call": 0.09335499722510576,
+              "allocations_per_call": 1031.005,
+              "bytes": 60,
+              "iterations": 200
+            }
+          },
+          "retained_heap_bytes": 6426191
+        },
+        {
+          "cases": {
+            "latin_short": {
+              "ms_per_call": 0.132535002194345,
+              "allocations_per_call": 1152.045,
+              "bytes": 60,
+              "iterations": 200
+            },
+            "latin_sentence": {
+              "ms_per_call": 0.2959866635501385,
+              "allocations_per_call": 3060.366666666667,
+              "bytes": 156,
+              "iterations": 150
+            },
+            "latin_10kb": {
+              "ms_per_call": 4.520100013663371,
+              "allocations_per_call": 58375.23333333333,
+              "bytes": 10000,
+              "iterations": 30
+            },
+            "latin_1mb": {
+              "ms_per_call": 490.51199946552515,
+              "allocations_per_call": 5750876.0,
+              "bytes": 1000000,
+              "iterations": 1
+            },
+            "cyrillic": {
+              "ms_per_call": 0.23250666757424673,
+              "allocations_per_call": 2837.3,
+              "bytes": 278,
+              "iterations": 150
+            },
+            "arabic": {
+              "ms_per_call": 0.19261333470543227,
+              "allocations_per_call": 2398.4466666666667,
+              "bytes": 243,
+              "iterations": 150
+            },
+            "devanagari": {
+              "ms_per_call": 0.20269333695371947,
+              "allocations_per_call": 2299.32,
+              "bytes": 328,
+              "iterations": 150
+            },
+            "hebrew": {
+              "ms_per_call": 0.19470666845639548,
+              "allocations_per_call": 2185.4933333333333,
+              "bytes": 220,
+              "iterations": 150
+            },
+            "ethiopic": {
+              "ms_per_call": 0.09525333220760028,
+              "allocations_per_call": 678.06,
+              "bytes": 260,
+              "iterations": 150
+            },
+            "script_only": {
+              "ms_per_call": 0.052525000646710396,
+              "allocations_per_call": 139.0,
+              "bytes": 192,
+              "iterations": 200
+            },
+            "below_minimum": {
+              "ms_per_call": 0.0022750021889805794,
+              "allocations_per_call": 32.0,
+              "bytes": 5,
+              "iterations": 200
+            },
+            "only_3_languages": {
+              "ms_per_call": 0.12842999771237373,
+              "allocations_per_call": 1035.005,
+              "bytes": 60,
+              "iterations": 200
+            },
+            "only_1_language": {
+              "ms_per_call": 0.0947650009766221,
+              "allocations_per_call": 1031.005,
+              "bytes": 60,
+              "iterations": 200
+            }
+          },
+          "retained_heap_bytes": 6426191
+        },
+        {
+          "cases": {
+            "latin_short": {
+              "ms_per_call": 0.13320500031113625,
+              "allocations_per_call": 1152.05,
+              "bytes": 60,
+              "iterations": 200
+            },
+            "latin_sentence": {
+              "ms_per_call": 0.29300666724642116,
+              "allocations_per_call": 3060.1266666666666,
+              "bytes": 156,
+              "iterations": 150
+            },
+            "latin_10kb": {
+              "ms_per_call": 4.54646668707331,
+              "allocations_per_call": 58376.0,
+              "bytes": 10000,
+              "iterations": 30
+            },
+            "latin_1mb": {
+              "ms_per_call": 478.75900007784367,
+              "allocations_per_call": 5750876.0,
+              "bytes": 1000000,
+              "iterations": 1
+            },
+            "cyrillic": {
+              "ms_per_call": 0.22909333308537802,
+              "allocations_per_call": 2837.3,
+              "bytes": 278,
+              "iterations": 150
+            },
+            "arabic": {
+              "ms_per_call": 0.1903266708056132,
+              "allocations_per_call": 2398.4466666666667,
+              "bytes": 243,
+              "iterations": 150
+            },
+            "devanagari": {
+              "ms_per_call": 0.19875333334008852,
+              "allocations_per_call": 2299.32,
+              "bytes": 328,
+              "iterations": 150
+            },
+            "hebrew": {
+              "ms_per_call": 0.1936266633371512,
+              "allocations_per_call": 2185.4933333333333,
+              "bytes": 220,
+              "iterations": 150
+            },
+            "ethiopic": {
+              "ms_per_call": 0.09444000199437141,
+              "allocations_per_call": 678.06,
+              "bytes": 260,
+              "iterations": 150
+            },
+            "script_only": {
+              "ms_per_call": 0.05183499772101641,
+              "allocations_per_call": 139.0,
+              "bytes": 192,
+              "iterations": 200
+            },
+            "below_minimum": {
+              "ms_per_call": 0.002259998582303524,
+              "allocations_per_call": 32.0,
+              "bytes": 5,
+              "iterations": 200
+            },
+            "only_3_languages": {
+              "ms_per_call": 0.1269800029695034,
+              "allocations_per_call": 1035.005,
+              "bytes": 60,
+              "iterations": 200
+            },
+            "only_1_language": {
+              "ms_per_call": 0.09405500255525112,
+              "allocations_per_call": 1031.005,
+              "bytes": 60,
+              "iterations": 200
+            }
+          },
+          "retained_heap_bytes": 6426191
+        }
+      ]
+    },
+    "cases": {
+      "latin_short": {
+        "baseline": {
+          "median_ms": 2.035910002887249,
+          "median_allocations": 1271.315,
+          "min_ms": 2.015404999256134,
+          "max_ms": 2.0427750004455447
+        },
+        "indexed": {
+          "median_ms": 0.13320500031113625,
+          "median_allocations": 1152.045,
+          "min_ms": 0.13225500006228685,
+          "max_ms": 0.13457000255584717
+        },
+        "speedup": 15.284035870514106
+      },
+      "latin_sentence": {
+        "baseline": {
+          "median_ms": 2.021826667090257,
+          "median_allocations": 3180.7466666666664,
+          "min_ms": 1.9911199994385242,
+          "max_ms": 2.0329333345095315
+        },
+        "indexed": {
+          "median_ms": 0.2948666674395402,
+          "median_allocations": 3060.366666666667,
+          "min_ms": 0.29300666724642116,
+          "max_ms": 0.30795333286126453
+        },
+        "speedup": 6.856748796487195
+      },
+      "latin_10kb": {
+        "baseline": {
+          "median_ms": 6.496433354914188,
+          "median_allocations": 58550.0,
+          "min_ms": 6.4768000195423765,
+          "max_ms": 6.5971000120043755
+        },
+        "indexed": {
+          "median_ms": 4.561433320244153,
+          "median_allocations": 58375.23333333333,
+          "min_ms": 4.520100013663371,
+          "max_ms": 4.702533346911271
+        },
+        "speedup": 1.4242087736068152
+      },
+      "latin_1mb": {
+        "baseline": {
+          "median_ms": 486.24000046402216,
+          "median_allocations": 5751050.0,
+          "min_ms": 484.19300001114607,
+          "max_ms": 493.1570002809167
+        },
+        "indexed": {
+          "median_ms": 490.19400030374527,
+          "median_allocations": 5750876.0,
+          "min_ms": 478.75900007784367,
+          "max_ms": 498.02600033581257
+        },
+        "speedup": 0.991933806131301
+      },
+      "cyrillic": {
+        "baseline": {
+          "median_ms": 0.4723733353118102,
+          "median_allocations": 2851.88,
+          "min_ms": 0.4681799995402495,
+          "max_ms": 0.47965333486596745
+        },
+        "indexed": {
+          "median_ms": 0.22958000500996908,
+          "median_allocations": 2837.3,
+          "min_ms": 0.22635333240032196,
+          "max_ms": 0.23377333457271257
+        },
+        "speedup": 2.057554338372361
+      },
+      "arabic": {
+        "baseline": {
+          "median_ms": 0.2718666692574819,
+          "median_allocations": 2401.7466666666664,
+          "min_ms": 0.27012666687369347,
+          "max_ms": 0.27684000010291737
+        },
+        "indexed": {
+          "median_ms": 0.19182666515310606,
+          "median_allocations": 2398.4466666666667,
+          "min_ms": 0.1901799999177456,
+          "max_ms": 0.19261333470543227
+        },
+        "speedup": 1.4172517102379487
+      },
+      "devanagari": {
+        "baseline": {
+          "median_ms": 0.29531999801596004,
+          "median_allocations": 2303.7533333333336,
+          "min_ms": 0.2933533303439617,
+          "max_ms": 0.29885999858379364
+        },
+        "indexed": {
+          "median_ms": 0.2007600044210752,
+          "median_allocations": 2299.32,
+          "min_ms": 0.19632666682203612,
+          "max_ms": 0.20269333695371947
+        },
+        "speedup": 1.4710101191099507
+      },
+      "hebrew": {
+        "baseline": {
+          "median_ms": 0.22203999881943068,
+          "median_allocations": 2185.693333333333,
+          "min_ms": 0.2212133320669333,
+          "max_ms": 0.22747333471973738
+        },
+        "indexed": {
+          "median_ms": 0.1936399998764197,
+          "median_allocations": 2185.4933333333333,
+          "min_ms": 0.19217333445946375,
+          "max_ms": 0.19475333392620087
+        },
+        "speedup": 1.1466639070498645
+      },
+      "ethiopic": {
+        "baseline": {
+          "median_ms": 0.12407333279649417,
+          "median_allocations": 678.06,
+          "min_ms": 0.12276666859785716,
+          "max_ms": 0.12451333304246266
+        },
+        "indexed": {
+          "median_ms": 0.09525333220760028,
+          "median_allocations": 678.06,
+          "min_ms": 0.09444000199437141,
+          "max_ms": 0.09651333093643188
+        },
+        "speedup": 1.302561599903739
+      },
+      "script_only": {
+        "baseline": {
+          "median_ms": 0.05224499851465225,
+          "median_allocations": 139.0,
+          "min_ms": 0.05180499982088804,
+          "max_ms": 0.05307000130414963
+        },
+        "indexed": {
+          "median_ms": 0.052525000646710396,
+          "median_allocations": 139.0,
+          "min_ms": 0.05183499772101641,
+          "max_ms": 0.053330003283917904
+        },
+        "speedup": 0.9946691646147428
+      },
+      "below_minimum": {
+        "baseline": {
+          "median_ms": 0.0022449996322393417,
+          "median_allocations": 32.0,
+          "min_ms": 0.002215001732110977,
+          "max_ms": 0.0022900011390447617
+        },
+        "indexed": {
+          "median_ms": 0.002259998582303524,
+          "median_allocations": 32.0,
+          "min_ms": 0.0022499961778521538,
+          "max_ms": 0.0023349979892373085
+        },
+        "speedup": 0.9933632922685754
+      },
+      "only_3_languages": {
+        "baseline": {
+          "median_ms": 0.12905999552458525,
+          "median_allocations": 1035.275,
+          "min_ms": 0.12839499861001968,
+          "max_ms": 0.12968999799340963
+        },
+        "indexed": {
+          "median_ms": 0.12842999771237373,
+          "median_allocations": 1035.005,
+          "min_ms": 0.1269800029695034,
+          "max_ms": 0.13056500349193811
+        },
+        "speedup": 1.0049053789880338
+      },
+      "only_1_language": {
+        "baseline": {
+          "median_ms": 0.09484500158578157,
+          "median_allocations": 1031.275,
+          "min_ms": 0.09380999952554703,
+          "max_ms": 0.09713000152260065
+        },
+        "indexed": {
+          "median_ms": 0.09453500155359507,
+          "median_allocations": 1031.005,
+          "min_ms": 0.09278499986976385,
+          "max_ms": 0.09648500010371208
+        },
+        "speedup": 1.0032792090452418
+      }
+    },
+    "median_retained_heap_bytes": {
+      "baseline": 4261996,
+      "indexed": 6426191
+    }
+  },
+  "cold": {
+    "raw_samples": {
+      "baseline": [
+        {
+          "require_ms": 0.7950002327561378,
+          "first_detection_ms": 8.839000016450882,
+          "second_detection_ms": 2.0580003038048744,
+          "allocations_after_first": 61950,
+          "allocations_after_second": 63282,
+          "retained_heap_after_first_bytes": 3236346,
+          "retained_heap_bytes": 3236410
+        },
+        {
+          "require_ms": 0.7950002327561378,
+          "first_detection_ms": 8.826000615954399,
+          "second_detection_ms": 2.0409999415278435,
+          "allocations_after_first": 61950,
+          "allocations_after_second": 63282,
+          "retained_heap_after_first_bytes": 3236346,
+          "retained_heap_bytes": 3236410
+        },
+        {
+          "require_ms": 0.7779998704791069,
+          "first_detection_ms": 8.702000603079796,
+          "second_detection_ms": 2.0850002765655518,
+          "allocations_after_first": 61950,
+          "allocations_after_second": 63282,
+          "retained_heap_after_first_bytes": 3236346,
+          "retained_heap_bytes": 3236410
+        },
+        {
+          "require_ms": 0.8040005341172218,
+          "first_detection_ms": 8.814999833703041,
+          "second_detection_ms": 2.096000127494335,
+          "allocations_after_first": 61950,
+          "allocations_after_second": 63282,
+          "retained_heap_after_first_bytes": 3236346,
+          "retained_heap_bytes": 3236410
+        },
+        {
+          "require_ms": 0.7830001413822174,
+          "first_detection_ms": 8.700000122189522,
+          "second_detection_ms": 2.019999548792839,
+          "allocations_after_first": 61950,
+          "allocations_after_second": 63282,
+          "retained_heap_after_first_bytes": 3236346,
+          "retained_heap_bytes": 3236410
+        },
+        {
+          "require_ms": 0.7910002022981644,
+          "first_detection_ms": 8.678999729454517,
+          "second_detection_ms": 2.046000212430954,
+          "allocations_after_first": 61950,
+          "allocations_after_second": 63282,
+          "retained_heap_after_first_bytes": 3236346,
+          "retained_heap_bytes": 3236410
+        },
+        {
+          "require_ms": 0.8200006559491158,
+          "first_detection_ms": 8.905000053346157,
+          "second_detection_ms": 2.019999548792839,
+          "allocations_after_first": 61950,
+          "allocations_after_second": 63282,
+          "retained_heap_after_first_bytes": 3236346,
+          "retained_heap_bytes": 3236410
+        }
+      ],
+      "indexed": [
+        {
+          "require_ms": 0.8899997919797897,
+          "first_detection_ms": 8.890999481081963,
+          "second_detection_ms": 4.022000357508659,
+          "allocations_after_first": 62013,
+          "allocations_after_second": 78971,
+          "retained_heap_after_first_bytes": 3236837,
+          "retained_heap_bytes": 4607901
+        },
+        {
+          "require_ms": 0.8190004155039787,
+          "first_detection_ms": 8.704000152647495,
+          "second_detection_ms": 3.9750002324581146,
+          "allocations_after_first": 62013,
+          "allocations_after_second": 78971,
+          "retained_heap_after_first_bytes": 3236837,
+          "retained_heap_bytes": 4607901
+        },
+        {
+          "require_ms": 0.8579995483160019,
+          "first_detection_ms": 8.710999973118305,
+          "second_detection_ms": 4.058999940752983,
+          "allocations_after_first": 62013,
+          "allocations_after_second": 78971,
+          "retained_heap_after_first_bytes": 3236837,
+          "retained_heap_bytes": 4607901
+        },
+        {
+          "require_ms": 0.8330000564455986,
+          "first_detection_ms": 8.710999973118305,
+          "second_detection_ms": 4.139999859035015,
+          "allocations_after_first": 62013,
+          "allocations_after_second": 78971,
+          "retained_heap_after_first_bytes": 3236837,
+          "retained_heap_bytes": 4607901
+        },
+        {
+          "require_ms": 0.8300002664327621,
+          "first_detection_ms": 8.728999644517899,
+          "second_detection_ms": 4.003999754786491,
+          "allocations_after_first": 62013,
+          "allocations_after_second": 78971,
+          "retained_heap_after_first_bytes": 3236837,
+          "retained_heap_bytes": 4607901
+        },
+        {
+          "require_ms": 0.8589997887611389,
+          "first_detection_ms": 8.751999586820602,
+          "second_detection_ms": 4.064999520778656,
+          "allocations_after_first": 62013,
+          "allocations_after_second": 78971,
+          "retained_heap_after_first_bytes": 3236837,
+          "retained_heap_bytes": 4607901
+        },
+        {
+          "require_ms": 0.8549997583031654,
+          "first_detection_ms": 8.597999811172485,
+          "second_detection_ms": 4.128000698983669,
+          "allocations_after_first": 62013,
+          "allocations_after_second": 78971,
+          "retained_heap_after_first_bytes": 3236837,
+          "retained_heap_bytes": 4607901
+        }
+      ]
+    },
+    "medians": {
+      "baseline": {
+        "require_ms": 0.7950002327561378,
+        "first_detection_ms": 8.814999833703041,
+        "second_detection_ms": 2.046000212430954,
+        "allocations_after_first": 61950,
+        "allocations_after_second": 63282,
+        "retained_heap_after_first_bytes": 3236346,
+        "retained_heap_bytes": 3236410
+      },
+      "indexed": {
+        "require_ms": 0.8549997583031654,
+        "first_detection_ms": 8.710999973118305,
+        "second_detection_ms": 4.058999940752983,
+        "allocations_after_first": 62013,
+        "allocations_after_second": 78971,
+        "retained_heap_after_first_bytes": 3236837,
+        "retained_heap_bytes": 4607901
+      }
+    }
+  }
+}

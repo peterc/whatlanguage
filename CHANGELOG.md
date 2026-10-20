@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Speed up repeated detection over the full language set with shared trigram
+  indexes, without changing scores or rankings. First calls and restricted
+  selections retain the original scan. Add equivalence tests and benchmarks.
 - Normalize nine individual-language ISO outputs to CLDR macrolanguage aliases
   (#51): `swh → sw`, `ayr → ay`, `knc → kr`, `quz → qu`, `khk → mn`,
   `kng → kg`, `src → sc`, `uzn → uz`, and `als → sq`. This changes

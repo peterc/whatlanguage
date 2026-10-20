@@ -92,6 +92,30 @@ class WhatLanguage
     def default_detector
       @default_detector ||= new
     end
+
+    # Shared index for a script: trigram => flat [candidate, rank, ...].
+    # Use the direct scan on the first call: one-shot CLI use should not pay
+    # to build an index. Flat arrays avoid an object for every posting.
+    def profile_index(script)
+      @profile_indexes ||= {}
+      unless @profile_indexes.key?(script)
+        @profile_indexes[script] = nil
+        return
+      end
+
+      @profile_indexes[script] ||= begin
+        candidates = profiles.fetch(script)
+        postings = {}
+        candidates.each_with_index do |(_code, trigrams), candidate|
+          trigrams.each_with_index do |trigram, rank|
+            (postings[trigram] ||= []).push(candidate, rank)
+          end
+        end
+        postings.each_value(&:freeze)
+        missing = candidates.map { |_code, trigrams| trigrams.size * MAX_TRIGRAM_DISTANCE }
+        [missing.freeze, postings.freeze].freeze
+      end
+    end
   end
 
   def initialize(*selection, only: nil, min_chars: DEFAULT_MIN_CHARS)
@@ -135,12 +159,25 @@ class WhatLanguage
 
     bonus = short_text_bonus(char_count)
     positions = trigram_positions(text)
-    candidates.each do |code, trigrams|
-      name = CODE_INFO[code].first
-      next unless allowed?(name)
+    # Small selections retain the direct scan rather than visiting postings for
+    # languages they cannot return.
+    distances = indexed_distances(script, positions) if @selection.include?(:all)
+    if distances
+      candidates.each_with_index do |(code, _trigrams), i|
+        name = CODE_INFO[code].first
+        next unless allowed?(name)
 
-      results[name] = MAX_TOTAL_DISTANCE - distance(trigrams, positions)
-      results[name] += bonus if SHORT_TEXT_PREFERENCES.include?(name)
+        results[name] = MAX_TOTAL_DISTANCE - distances[i]
+        results[name] += bonus if SHORT_TEXT_PREFERENCES.include?(name)
+      end
+    else
+      candidates.each do |code, trigrams|
+        name = CODE_INFO[code].first
+        next unless allowed?(name)
+
+        results[name] = MAX_TOTAL_DISTANCE - distance(trigrams, positions)
+        results[name] += bonus if SHORT_TEXT_PREFERENCES.include?(name)
+      end
     end
     results
   end
@@ -256,6 +293,29 @@ class WhatLanguage
 
   # Out-of-place distance between a language's ordered trigram profile and the
   # text's ranked trigrams. Lower means a closer match.
+  def indexed_distances(script, positions)
+    index = self.class.send(:profile_index, script)
+    return unless index
+
+    missing, postings = index
+    totals = missing.dup
+    positions.each do |trigram, position|
+      matches = postings[trigram]
+      next unless matches
+
+      i = 0
+      while i < matches.size
+        # Replace the missing-trigram penalty with the exact rank distance.
+        # This correction can be positive when the text rank is above 300.
+        totals[matches[i]] += (position - matches[i + 1]).abs - MAX_TRIGRAM_DISTANCE
+        i += 2
+      end
+    end
+
+    adjustment = [MAX_TRIGRAM_DISTANCE - positions.size, 0].max * MAX_TRIGRAM_DISTANCE
+    totals.map! { |total| (total - adjustment).clamp(0, MAX_TOTAL_DISTANCE) }
+  end
+
   def distance(profile, positions)
     total = 0
     profile.each_with_index do |trigram, i|
