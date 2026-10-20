@@ -79,6 +79,7 @@ Unicode, combining marks, case conversion, whitespace, unsupported scripts, and
 seeded generated inputs. They also check tied winners, empty results, and
 mutation of a configured detector's language list.
 
-The full suite passes with **67 tests and 5,611 assertions** on Ruby 4.0.2,
-Ruby 3.3.11, JRuby 9.4.14.0, and TruffleRuby 34.0.1. The timings above are
-MRI measurements, not speedup claims for the other runtimes.
+The full suite passes with **67 tests and 5,611 assertions** on Ruby 3.0.7
+(Linux), Ruby 3.3.11, Ruby 4.0.2, JRuby 9.4.14.0, and TruffleRuby 34.0.1.
+The timings above are Ruby 4.0.2 measurements, not speedup claims for the other
+runtimes.

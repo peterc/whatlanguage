@@ -17,14 +17,10 @@ WhatLanguage.language("Que linguagem é essa? É uma pergunta sobre a língua po
 - **Best on sentence-length text or longer.** Short texts can have ambiguous results.
 
 > [!IMPORTANT]
-> v2.0 has many breaking changes as the entire library has been reimplemented, though the core `WhatLanguage.language` API remains similar. Versions 1.0.6 and earlier (so the 2007-2025 run of the library) used a Bloom-filter technique and had 5MB of binary files to handle ~20 languages. Version 2.0 is more accurate, faster, and supports more languages from a single 220KB JSON file :-)
+> Version 3.0 changes nine ISO output codes, speeds up detection, and reduces
+> allocations. See [Upgrading to 3.0](#upgrading-to-30) for the code changes.
 
 ## How it works
-
-> [!NOTE]
-> Version 2.1 improves Unicode and mixed-script Japanese handling and adds a fixed
-> preference for five widely spoken languages on short texts. The public API and
-> default 10-letter minimum for statistical detection are unchanged.
 
 Detection is in two stages. First, the dominant Unicode script is detected from letters; scripts used by a single supported language (Greek, Korean, Thai, Japanese using Hiragana/Katakana) resolve immediately. When kana is present, Han, Hiragana, and Katakana count together as Japanese, while a dominant unrelated script can still win. For scripts shared by several languages (e.g. Latin, Cyrillic, Arabic, Hebrew) trigrams are ranked by frequency and compared against candidate language profiles.
 
@@ -90,6 +86,30 @@ Short shared-script fragments are ignored by default because there is not enough
 ```ruby
 wl = WhatLanguage.new(min_chars: 0)
 ```
+
+## Upgrading to 3.0
+
+Update comparisons against `result.iso`, `language_iso`, and CLI output:
+
+| Language | Previous code | 3.0 code |
+| --- | --- | --- |
+| Swahili | `swh` | `sw` |
+| Central Aymara | `ayr` | `ay` |
+| Central Kanuri | `knc` | `kr` |
+| Cusco Quechua | `quz` | `qu` |
+| Halh Mongolian | `khk` | `mn` |
+| Koongo | `kng` | `kg` |
+| Logudorese Sardinian | `src` | `sc` |
+| Northern Uzbek | `uzn` | `uz` |
+| Tosk Albanian | `als` | `sq` |
+
+Both Northern Uzbek and Uzbek now return `uz`; use `result.language` to
+distinguish them. Language-name symbols, detection scores, rankings, options,
+and return types are unchanged from 2.1.
+
+If upgrading from 1.x, see the [2.0 changelog](CHANGELOG.md#200--2026-06-10) too.
+Version 2.0 replaced the Bloom-filter engine with trigram profiles and removed
+the `String#language` monkeypatch.
 
 ## Command line
 

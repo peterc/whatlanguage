@@ -1,21 +1,24 @@
 # Changelog
 
-## Unreleased
+## 3.0.0 / 2026-10-20
 
-- Reduce text-processing allocations with rolling trigram windows and a shared
-  script/letter-count pass. Add an ASCII fast path, cache restricted candidates,
-  and avoid sorting when only the winning language is requested.
-- Speed up repeated detection over the full language set with shared trigram
-  indexes, without changing scores or rankings. First calls and restricted
-  selections retain the original scan. Add equivalence tests and benchmarks.
-- Normalize nine individual-language ISO outputs to CLDR macrolanguage aliases
+- **Breaking:** Normalized nine individual-language ISO outputs to CLDR macrolanguage aliases
   (#51): `swh → sw`, `ayr → ay`, `knc → kr`, `quz → qu`, `khk → mn`,
   `kng → kg`, `src → sc`, `uzn → uz`, and `als → sq`. This changes
   `Result#iso`, instance/class `language_iso`, and CLI output; callers comparing
   the previous codes must update those comparisons. Language names and detection
   scores are unchanged. Northern Uzbek and Uzbek now both return `uz`.
-- Preserve the individual codes `quy`, `qug`, `koi`, and `min`, and document the
-  selected CLDR aliases and historical overrides used for ISO output.
+- Preserved the individual codes `quy`, `qug`, `koi`, and `min`, and documented
+  the selected CLDR aliases and historical overrides used for ISO output.
+- Added shared trigram indexes to speed up repeated detection over the full
+  language set, without changing scores or rankings. First calls and restricted
+  selections retain the original scan.
+- Reduced text-processing allocations with rolling trigram windows, a combined
+  script/letter-count pass, and an ASCII fast path. Cached restricted candidates
+  and avoided sorting when only the winning language is requested.
+- Added equivalence tests and reproducible benchmarks for
+  [indexed scoring](benchmark/README.md) and
+  [text processing](benchmark/long-inputs.md), including allocation and memory costs.
 
 ## 2.1.0 / 2026-09-05
 
